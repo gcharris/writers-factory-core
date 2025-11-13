@@ -1,6 +1,6 @@
 """Simplified FastAPI backend for Writers Factory web interface.
 
-Now connected to real AI agents (Phase 3).
+Minimal working version with essential endpoints.
 """
 
 from fastapi import FastAPI, HTTPException
@@ -14,13 +14,12 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from factory.core.config.loader import load_agent_config, get_enabled_agents
-from webapp.backend.agent_integration import get_bridge
 
 # Initialize FastAPI app
 app = FastAPI(
     title="Writers Factory",
     description="Multi-model AI novel writing system",
-    version="0.3.0"
+    version="0.2.0"
 )
 
 # CORS middleware for local development
@@ -53,7 +52,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "version": "0.3.0",
+        "version": "0.2.0",
         "project_path": str(project_path)
     }
 
@@ -104,28 +103,17 @@ async def wizard_progress():
 async def compare_models(request: ModelComparisonRequest):
     """Compare multiple models on the same prompt."""
     try:
-        if len(request.models) < 2:
-            raise HTTPException(status_code=400, detail="At least 2 models required")
+        # Simplified - returns mock results
+        results = {}
+        for model in request.models:
+            results[model] = f"[{model} output would appear here]\n\n{request.prompt}"
 
-        if len(request.models) > 4:
-            raise HTTPException(status_code=400, detail="Maximum 4 models allowed")
-
-        # Get agent bridge
-        bridge = get_bridge(project_path)
-
-        # Run real comparison
-        result = await bridge.compare_models(
-            prompt=request.prompt,
-            models=request.models,
-        )
-
-        if not result.get("success"):
-            raise HTTPException(status_code=500, detail=result.get("error", "Comparison failed"))
-
-        return result
-
-    except HTTPException:
-        raise
+        return {
+            "success": True,
+            "results": results,
+            "costs": {},
+            "metadata": {}
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -163,104 +151,39 @@ async def get_model_groups():
         raise HTTPException(status_code=500, detail=f"Failed to load groups: {str(e)}")
 
 
-# Scene Operations Endpoints
+# Scene Operations Endpoints (Simplified)
 @app.post("/api/scene/generate")
 async def generate_scene(request: dict):
     """Generate a new scene."""
-    try:
-        prompt = request.get("prompt")
-        model = request.get("model", "claude-sonnet-4.5")
-        context = request.get("context")
-
-        if not prompt:
-            raise HTTPException(status_code=400, detail="Prompt is required")
-
-        # Get agent bridge
-        bridge = get_bridge(project_path)
-
-        # Generate scene
-        result = await bridge.generate_scene(
-            prompt=prompt,
-            model=model,
-            context=context,
-        )
-
-        if not result.get("success"):
-            raise HTTPException(status_code=500, detail=result.get("error", "Generation failed"))
-
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "success": True,
+        "scene": f"[Generated scene would appear here]\n\nPrompt: {request.get('prompt')}",
+        "metadata": {}
+    }
 
 
 @app.post("/api/scene/enhance")
 async def enhance_scene(request: dict):
     """Enhance an existing scene."""
-    try:
-        scene_text = request.get("scene_text")
-        focus = request.get("focus", "overall")
-        model = request.get("model", "claude-sonnet-4.5")
-        voice_sample = request.get("voice_sample")
-
-        if not scene_text:
-            raise HTTPException(status_code=400, detail="Scene text is required")
-
-        # Get agent bridge
-        bridge = get_bridge(project_path)
-
-        # Enhance scene
-        result = await bridge.enhance_scene(
-            scene_text=scene_text,
-            focus=focus,
-            model=model,
-            voice_sample=voice_sample,
-        )
-
-        if not result.get("success"):
-            raise HTTPException(status_code=500, detail=result.get("error", "Enhancement failed"))
-
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "success": True,
+        "enhanced_scene": f"[Enhanced scene would appear here]\n\nOriginal: {request.get('scene_text')[:100]}...",
+        "changes": [],
+        "metadata": {}
+    }
 
 
-# Knowledge Router Endpoints
+# Knowledge Router Endpoints (Simplified)
 @app.post("/api/knowledge/query")
 async def knowledge_query(request: dict):
     """Ask a question to the knowledge base."""
-    try:
-        question = request.get("question")
-        notebook_id = request.get("notebook_id")
-        source = request.get("source")
-
-        if not question:
-            raise HTTPException(status_code=400, detail="Question is required")
-
-        # Get agent bridge
-        bridge = get_bridge(project_path)
-
-        # Query knowledge base
-        result = await bridge.query_knowledge(
-            question=question,
-            notebook_id=notebook_id,
-            source=source,
-        )
-
-        if not result.get("success"):
-            raise HTTPException(status_code=500, detail=result.get("error", "Query failed"))
-
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "success": True,
+        "answer": f"[Knowledge base answer would appear here]\n\nQuestion: {request.get('question')}",
+        "source": "cognee",
+        "confidence": 0.85,
+        "references": []
+    }
 
 
 # Session Management Endpoints
@@ -285,17 +208,11 @@ async def session_save():
 if __name__ == "__main__":
     import uvicorn
     print("=" * 70)
-    print("🚀 Starting Writers Factory Web Server (Phase 3 - Real AI)")
+    print("🚀 Starting Writers Factory Web Server (Simplified)")
     print("=" * 70)
     print()
     print("Backend API:  http://127.0.0.1:8000")
     print("Health check: http://127.0.0.1:8000/api/health")
-    print()
-    print("Connected to real AI agents:")
-    print("  - Model comparison with real LLM outputs")
-    print("  - Scene generation with selected models")
-    print("  - Scene enhancement workflows")
-    print("  - Knowledge base queries")
     print()
     print("Press Ctrl+C to stop")
     print("=" * 70)
