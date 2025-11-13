@@ -1,0 +1,32 @@
+Please read the START_HERE.md file in the docs/tasks/ directory of the writers-factory-core repository.
+
+This contains your complete instructions for implementing the full Writers Factory system - a multi-model AI novel writing tool with 5-stage workflow (Creation → Writing → Enhancing → Analyzing → Scoring).
+
+Your mission:
+1. Read START_HERE.md and PROMPT_Cloud_Agent_Master_Instructions.md
+2. Complete all 7 tasks sequentially (detailed specs in TASK_*.md files)
+3. Commit and push after each task completion
+4. Don't wait for approval between tasks - work autonomously
+5. When all tasks complete, create a final report summarizing your work
+
+Key points:
+- You have full read/write/push access to writers-factory-core repository
+- Work autonomously - make decisions when specs are ambiguous
+- Write tests for everything
+- Follow the commit message format in master instructions
+- Target timeline: 2-3 weeks total
+
+Tasks to complete in order:
+1. Storage & Session Management (3-4 hours)
+2. Master CLI - Rich TUI (4-5 hours)
+3. Knowledge Router (3-4 hours)
+4. Workflows Module (4-5 hours)
+5. Model Comparison Tool (3-4 hours)
+6. Creation Wizard (6-8 hours)
+7. Integration & Polish (2-3 hours)
+
+Success criteria: All 23 checkpoints from the rebuild prompt must be met.
+
+Begin with Task 1 and work through to Task 7. Report back when complete with a summary of all commits, tests written, and success criteria met.
+
+Let's build something amazing! 🚀
