@@ -171,6 +171,11 @@ function renderModelGrid() {
         card.className = 'model-card';
         card.onclick = () => toggleModelSelection(model.id, card);
 
+        // Apply 'selected' class if model is already selected
+        if (selectedModels.includes(model.id)) {
+            card.classList.add('selected');
+        }
+
         const costText = model.cost_input === 0
             ? 'FREE'
             : `$${(model.cost_input * 1000).toFixed(2)}/M tokens`;
