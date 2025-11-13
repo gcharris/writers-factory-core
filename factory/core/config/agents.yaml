@@ -53,6 +53,22 @@ agents:
     handler: factory.agents.anthropic.ClaudeSonnet35
     description: "Fast and reliable for general creative writing"
 
+  claude-3-opus:
+    provider: anthropic
+    model: claude-3-opus-20240229
+    enabled: true
+    context_window: 200000
+    max_output: 4096
+    cost_per_1k_input: 0.015
+    cost_per_1k_output: 0.075
+    strengths:
+      - creative_narrative
+      - complex_reasoning
+      - nuanced_character_development
+      - philosophical_depth
+    handler: factory.agents.anthropic.Claude3Opus
+    description: "Previous generation Opus - excellent creative writing"
+
   # ============================================================================
   # OPENAI MODELS
   # ============================================================================
@@ -91,7 +107,7 @@ agents:
   gpt-3.5-turbo:
     provider: openai
     model: gpt-3.5-turbo-0125
-    enabled: false
+    enabled: true
     context_window: 16385
     max_output: 4096
     cost_per_1k_input: 0.0005
@@ -100,8 +116,25 @@ agents:
       - speed
       - cost_effective
       - quick_drafts
+      - creative_writing
     handler: factory.agents.openai.GPT35Turbo
-    description: "Fast and cheap for initial drafts"
+    description: "Fast and cheap - surprisingly good for creative writing"
+
+  gpt-3.5-turbo-16k:
+    provider: openai
+    model: gpt-3.5-turbo-16k-0613
+    enabled: true
+    context_window: 16385
+    max_output: 4096
+    cost_per_1k_input: 0.001
+    cost_per_1k_output: 0.002
+    strengths:
+      - longer_context
+      - creative_writing
+      - narrative_flow
+      - cost_effective
+    handler: factory.agents.openai.GPT35Turbo16k
+    description: "Longer context GPT-3.5 - good creative writing quality"
 
   # ============================================================================
   # GOOGLE MODELS
@@ -137,6 +170,21 @@ agents:
       - research
     handler: factory.agents.google.Gemini15Pro
     description: "Best for analyzing large reference materials"
+
+  gemini-1.0-pro:
+    provider: google
+    model: gemini-1.0-pro
+    enabled: true
+    context_window: 32000
+    max_output: 2048
+    cost_per_1k_input: 0.0005
+    cost_per_1k_output: 0.0015
+    strengths:
+      - creative_writing
+      - cost_effective
+      - narrative_flow
+    handler: factory.agents.google.Gemini10Pro
+    description: "Earlier Gemini - good for creative writing experiments"
 
   # ============================================================================
   # XAI MODELS
@@ -179,7 +227,7 @@ agents:
   qwen-turbo:
     provider: alibaba
     model: qwen-turbo
-    enabled: false
+    enabled: true
     context_window: 8000
     max_output: 6000
     cost_per_1k_input: 0.002
@@ -251,6 +299,70 @@ agents:
     handler: factory.agents.chinese.kimi.KimiAgent
     description: "Kimi (月之暗面) - Long context specialist"
 
+  chatglm:
+    provider: zhipu
+    model: glm-4
+    enabled: true
+    context_window: 128000
+    max_output: 4000
+    cost_per_1k_input: 0.005
+    cost_per_1k_output: 0.005
+    strengths:
+      - dialogue
+      - chinese_vernacular
+      - conversational
+      - character_banter
+    handler: factory.agents.chinese.chatglm.ChatGLMAgent
+    description: "ChatGLM/Zhipu AI - Strong dialogue and everyday speech"
+
+  ernie:
+    provider: baidu
+    model: ernie-4.0-8k
+    enabled: true
+    context_window: 8000
+    max_output: 2000
+    cost_per_1k_input: 0.012
+    cost_per_1k_output: 0.012
+    strengths:
+      - chinese_language
+      - knowledge_base
+      - reasoning
+      - creative_writing
+    handler: factory.agents.chinese.ernie.ErnieAgent
+    description: "Baidu ERNIE (文心一言) - Strong Chinese language model"
+
+  hunyuan:
+    provider: tencent
+    model: hunyuan-pro
+    enabled: true
+    context_window: 32000
+    max_output: 4000
+    cost_per_1k_input: 0.01
+    cost_per_1k_output: 0.01
+    strengths:
+      - multilingual
+      - creative_writing
+      - long_context
+      - reasoning
+    handler: factory.agents.chinese.hunyuan.HunyuanAgent
+    description: "Tencent Hunyuan (混元) - Versatile creative writing model"
+
+  yi:
+    provider: 01ai
+    model: yi-large
+    enabled: true
+    context_window: 32000
+    max_output: 4000
+    cost_per_1k_input: 0.003
+    cost_per_1k_output: 0.003
+    strengths:
+      - multimodal
+      - descriptive_passages
+      - mood_setting
+      - stylistic_experimentation
+    handler: factory.agents.chinese.yi.YiAgent
+    description: "01.AI Yi (零一万物) - Strong narrative and descriptive capabilities"
+
   # ============================================================================
   # OPEN SOURCE MODELS
   # ============================================================================
@@ -258,7 +370,7 @@ agents:
   mistral-large:
     provider: mistral
     model: mistral-large-latest
-    enabled: false
+    enabled: true
     context_window: 128000
     max_output: 4096
     cost_per_1k_input: 0.003
@@ -273,7 +385,7 @@ agents:
   llama-3-70b:
     provider: meta
     model: llama-3-70b-instruct
-    enabled: false
+    enabled: true
     context_window: 8192
     max_output: 2048
     cost_per_1k_input: 0.0
