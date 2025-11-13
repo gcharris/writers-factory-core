@@ -78,15 +78,17 @@ class KnowledgeRouter:
         """
         query_lower = query.lower()
 
-        # Simple keyword-based classification
+        # Analytical queries (check first - most specific)
+        if any(word in query_lower for word in ["why ", "analyze", "compare", "explain why"]):
+            return QueryType.ANALYTICAL
+
+        # Factual queries
         if any(word in query_lower for word in ["what is", "who is", "when", "where"]):
             return QueryType.FACTUAL
 
+        # Conceptual queries
         if any(word in query_lower for word in ["relationship", "connect", "related"]):
             return QueryType.CONCEPTUAL
-
-        if any(word in query_lower for word in ["analyze", "compare", "explain why"]):
-            return QueryType.ANALYTICAL
 
         return QueryType.GENERAL
 

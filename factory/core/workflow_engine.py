@@ -10,7 +10,6 @@ This module provides a flexible workflow execution system with:
 
 import asyncio
 import logging
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -159,11 +158,14 @@ class WorkflowStep:
             return self.function(context)
 
 
-class Workflow(ABC):
+class Workflow:
     """Base class for all workflows.
 
     Workflows define a series of steps that execute in order, respecting
     dependencies and handling errors gracefully.
+
+    Workflows can be used directly by adding steps via add_step(), or
+    subclassed to override define_steps() for a more structured approach.
     """
 
     def __init__(
@@ -220,12 +222,12 @@ class Workflow(ABC):
                 return step
         return None
 
-    @abstractmethod
     def define_steps(self) -> None:
         """Define the workflow steps.
 
-        This method should be implemented by subclasses to add all
-        workflow steps using add_step().
+        This method can be overridden by subclasses to add all
+        workflow steps using add_step(). If not overridden, steps
+        can be added directly using add_step().
         """
         pass
 
