@@ -13,8 +13,10 @@ from rich.panel import Panel
 from rich.text import Text
 
 from factory.core.storage import Session, CostTracker, PreferencesManager
+from factory.knowledge.router import KnowledgeRouter
 from .status_bar import StatusBar
 from .stage_navigator import StageNavigator
+from .query_dialog import QueryDialog
 
 logger = logging.getLogger(__name__)
 
@@ -32,22 +34,32 @@ class WritersFactoryApp:
     
     def __init__(self, project_path: Path):
         """Initialize application.
-        
+
         Args:
             project_path: Path to project root
         """
         self.project_path = Path(project_path)
         self.console = Console()
-        
+
         # Core components (from Task 1)
         self.session = Session(self.project_path)
         self.cost_tracker = CostTracker(self.project_path / ".session")
         self.preferences = PreferencesManager(self.project_path / ".session")
-        
+
+        # Knowledge router (Task 3)
+        notebooklm_enabled = self.preferences.data.notebooklm_enabled if hasattr(self.preferences.data, 'notebooklm_enabled') else False
+        notebooklm_id = self.preferences.data.notebooklm_notebook_id if hasattr(self.preferences.data, 'notebooklm_notebook_id') else None
+        self.knowledge_router = KnowledgeRouter(
+            project_path=self.project_path,
+            notebooklm_enabled=notebooklm_enabled,
+            notebooklm_notebook_id=notebooklm_id
+        )
+
         # UI components
         self.status_bar = StatusBar()
         self.navigator = StageNavigator(self.session.data.current_state.stage)
-        
+        self.query_dialog = QueryDialog(self.knowledge_router, self.console)
+
         # State
         self.running = False
         self._last_key: Optional[str] = None
@@ -159,11 +171,26 @@ class WritersFactoryApp:
             
         elif key == "k":
             # Ask question (Task 3)
-            pass  # TODO: Implement in Task 3
+            await self._handle_query_dialog()
             
         elif key == "q":
             # Quit
             self.running = False
+
+    async def _handle_query_dialog(self):
+        """Handle knowledge query dialog.
+
+        Triggered by 'K' keyboard shortcut.
+        """
+        # Run interactive query
+        result = await self.query_dialog.interactive_query()
+
+        if result:
+            # Track query in session
+            self.session.add_recent_query(
+                query=result.metadata.get("query", ""),
+                source=result.source.value
+            )
 
 
 # Simple CLI entry point for testing
