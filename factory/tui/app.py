@@ -14,6 +14,7 @@ from rich.text import Text
 
 from factory.core.storage import Session, CostTracker, PreferencesManager
 from factory.knowledge.router import KnowledgeRouter
+from factory.tools import ModelComparisonTool
 from .status_bar import StatusBar
 from .stage_navigator import StageNavigator
 from .query_dialog import QueryDialog
@@ -59,6 +60,10 @@ class WritersFactoryApp:
         self.status_bar = StatusBar()
         self.navigator = StageNavigator(self.session.data.current_state.stage)
         self.query_dialog = QueryDialog(self.knowledge_router, self.console)
+        self.model_comparison = ModelComparisonTool(
+            preferences_manager=self.preferences,
+            console=self.console
+        )
 
         # State
         self.running = False
@@ -167,8 +172,8 @@ class WritersFactoryApp:
             
         elif key == "c":
             # Open model comparison (Task 5)
-            pass  # TODO: Implement in Task 5
-            
+            await self._handle_model_comparison()
+
         elif key == "k":
             # Ask question (Task 3)
             await self._handle_query_dialog()
@@ -191,6 +196,78 @@ class WritersFactoryApp:
                 query=result.metadata.get("query", ""),
                 source=result.source.value
             )
+
+    async def _handle_model_comparison(self):
+        """Handle model comparison dialog.
+
+        Triggered by 'C' keyboard shortcut.
+        """
+        self.console.print("\n[bold cyan]Model Comparison Tool[/]\n")
+        self.console.print("Enter prompt to test across models:")
+
+        try:
+            prompt = self.console.input("[cyan]❯[/] ")
+        except (KeyboardInterrupt, EOFError):
+            return
+
+        if not prompt.strip():
+            return
+
+        self.console.print("\nSelect models to compare (2-4):")
+        self.console.print("1. claude-sonnet-4.5")
+        self.console.print("2. claude-opus-4")
+        self.console.print("3. gpt-4o")
+        self.console.print("4. gemini-2-flash")
+
+        try:
+            selection = self.console.input("\n[cyan]Enter numbers (e.g., 1,3):[/] ")
+        except (KeyboardInterrupt, EOFError):
+            return
+
+        # Parse model selection
+        model_map = {
+            "1": "claude-sonnet-4.5",
+            "2": "claude-opus-4",
+            "3": "gpt-4o",
+            "4": "gemini-2-flash"
+        }
+
+        selected_models = [
+            model_map[num.strip()]
+            for num in selection.split(",")
+            if num.strip() in model_map
+        ]
+
+        if len(selected_models) < 2:
+            self.console.print("[red]Need at least 2 models[/]")
+            return
+
+        # Run comparison
+        self.console.print(f"\n[yellow]Comparing {len(selected_models)} models...[/]")
+
+        result = await self.model_comparison.compare_models(
+            prompt=prompt,
+            models=selected_models
+        )
+
+        # Display comparison
+        self.console.print(self.model_comparison.render_comparison(result))
+
+        # Ask for winner
+        self.console.print("\n[cyan]Select winner (or press Enter to skip):[/]")
+        for i, model in enumerate(selected_models, 1):
+            self.console.print(f"{i}. {model}")
+
+        try:
+            winner_input = self.console.input("\n[cyan]Winner number:[/] ")
+            if winner_input.strip() and winner_input.strip().isdigit():
+                winner_idx = int(winner_input.strip()) - 1
+                if 0 <= winner_idx < len(selected_models):
+                    winner = selected_models[winner_idx]
+                    await self.model_comparison.save_preference(result, winner)
+                    self.console.print(f"[green]✓ Saved preference: {winner}[/]")
+        except (KeyboardInterrupt, EOFError, ValueError):
+            pass
 
 
 # Simple CLI entry point for testing
