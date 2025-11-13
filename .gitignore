@@ -80,5 +80,12 @@ venv.bak/
 # API credentials
 config/credentials.json
 
+# Session data
+project/.session/
+*.session
+
+# Cognee data
+.cognee/
+
 # OS files
 Thumbs.db
