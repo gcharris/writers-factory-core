@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writers Factory - Multi-Model AI Novel Writing System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 1.2em;
+        }
+
+        .status-bar {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #48bb78;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #4a5568;
+        }
+
+        .tab-button:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            min-height: 500px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .wizard-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .wizard-phase {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .wizard-phase h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .wizard-question {
+            background: #f7fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .wizard-question p {
+            font-size: 1.2em;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 150px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .model-card {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .model-card:hover {
+            border-color: #667eea;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .model-card.selected {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .model-card h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .model-card .provider {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .model-card .description {
+            color: #718096;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .model-card .cost {
+            color: #48bb78;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .comparison-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: #f7fafc;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-card h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .result-card .output {
+            color: #4a5568;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border-left: 4px solid #48bb78;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border-left: 4px solid #f56565;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✨ Writers Factory</h1>
+            <p class="subtitle">Multi-Model AI Novel Writing System</p>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator"></div>
+                <span>Server Connected</span>
+            </div>
+            <div class="status-item">
+                <span id="session-cost">Session Cost: $0.00</span>
+            </div>
+            <div class="status-item">
+                <span id="models-available">23 Models Available</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" data-tab="wizard">Creation Wizard</button>
+            <button class="tab-button" data-tab="compare">Model Comparison</button>
+            <button class="tab-button" data-tab="scene">Scene Tools</button>
+            <button class="tab-button" data-tab="knowledge">Knowledge Base</button>
+        </div>
+
+        <!-- Creation Wizard Tab -->
+        <div class="tab-content active" id="wizard-tab">
+            <div class="wizard-container">
+                <div id="wizard-start" style="display: block;">
+                    <h2>Start a New Story Project</h2>
+                    <div class="form-group">
+                        <label for="project-name">Project Name</label>
+                        <input type="text" id="project-name" placeholder="my-novel-project">
+                    </div>
+                    <button class="button" onclick="startWizard()">Begin Creation Wizard →</button>
+                </div>
+
+                <div id="wizard-active" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="wizard-progress"></div>
+                    </div>
+
+                    <div class="wizard-phase">
+                        <h2 id="wizard-phase-name">Foundation</h2>
+                        <p id="wizard-phase-description">Establishing your story's core</p>
+                    </div>
+
+                    <div class="wizard-question">
+                        <p id="wizard-current-question">Loading...</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="wizard-answer">Your Answer</label>
+                        <textarea id="wizard-answer" placeholder="Share your thoughts..."></textarea>
+                    </div>
+
+                    <button class="button" onclick="submitAnswer()">Continue →</button>
+                </div>
+
+                <div id="wizard-complete" style="display: none;">
+                    <h2>✅ Story Bible Complete!</h2>
+                    <div class="success-message">
+                        <p>Your story bible has been generated and saved to your project directory.</p>
+                    </div>
+                    <div class="form-group" style="margin-top: 30px;">
+                        <label>Generated Story Bible</label>
+                        <textarea id="story-bible-output" readonly style="min-height: 400px;"></textarea>
+                    </div>
+                    <button class="button" onclick="resetWizard()">Start New Project</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Comparison Tab -->
+        <div class="tab-content" id="compare-tab">
+            <h2>Model Comparison Tournament</h2>
+            <p style="color: #718096; margin-bottom: 30px;">Compare outputs from multiple AI models side-by-side</p>
+
+            <div class="form-group">
+                <label for="compare-prompt">Writing Prompt</label>
+                <textarea id="compare-prompt" placeholder="Write a scene where Mickey stands in quantum space, watching fractal patterns collapse..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Select Models to Compare (2-4 models)</label>
+                <div class="model-grid" id="model-grid">
+                    <!-- Models loaded dynamically -->
+                </div>
+            </div>
+
+            <button class="button" onclick="runComparison()">Run Comparison</button>
+
+            <div id="comparison-loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Generating responses from selected models...</p>
+            </div>
+
+            <div id="comparison-results" class="comparison-results"></div>
+        </div>
+
+        <!-- Scene Tools Tab -->
+        <div class="tab-content" id="scene-tab">
+            <h2>Scene Generation & Enhancement</h2>
+
+            <div class="tabs" style="margin-bottom: 30px;">
+                <button class="tab-button active" onclick="switchSceneTool('generate')">Generate Scene</button>
+                <button class="tab-button" onclick="switchSceneTool('enhance')">Enhance Scene</button>
+            </div>
+
+            <div id="scene-generate" style="display: block;">
+                <div class="form-group">
+                    <label for="scene-prompt">Scene Prompt</label>
+                    <textarea id="scene-prompt" placeholder="Describe the scene you want to generate..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="scene-context">Context (optional)</label>
+                    <textarea id="scene-context" placeholder="Additional context about characters, setting, etc."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="scene-model">Model</label>
+                    <select id="scene-model" style="width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0;">
+                        <option value="claude-sonnet-4.5">Claude Sonnet 4.5</option>
+                        <option value="gpt-4o">GPT-4o</option>
+                        <option value="claude-opus-4">Claude Opus 4</option>
+                    </select>
+                </div>
+
+                <button class="button" onclick="generateScene()">Generate Scene</button>
+
+                <div id="scene-output" style="display: none; margin-top: 30px;">
+                    <div class="form-group">
+                        <label>Generated Scene</label>
+                        <textarea id="generated-scene" readonly style="min-height: 300px;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div id="scene-enhance" style="display: none;">
+                <div class="form-group">
+                    <label for="enhance-input">Scene to Enhance</label>
+                    <textarea id="enhance-input" placeholder="Paste your scene here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="enhance-focus">Enhancement Focus</label>
+                    <select id="enhance-focus" style="width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0;">
+                        <option value="voice">Character Voice</option>
+                        <option value="pacing">Pacing</option>
+                        <option value="dialogue">Dialogue</option>
+                        <option value="description">Description</option>
+                    </select>
+                </div>
+
+                <button class="button" onclick="enhanceScene()">Enhance Scene</button>
+
+                <div id="enhance-output" style="display: none; margin-top: 30px;">
+                    <div class="form-group">
+                        <label>Enhanced Scene</label>
+                        <textarea id="enhanced-scene" readonly style="min-height: 300px;"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Knowledge Base Tab -->
+        <div class="tab-content" id="knowledge-tab">
+            <h2>Ask Your Knowledge Base</h2>
+            <p style="color: #718096; margin-bottom: 30px;">Query your story bible, character notes, and reference materials</p>
+
+            <div class="form-group">
+                <label for="knowledge-question">Your Question</label>
+                <input type="text" id="knowledge-question" placeholder="What is Mickey's relationship with quantum space?">
+            </div>
+
+            <button class="button" onclick="askKnowledge()">Ask Question</button>
+
+            <div id="knowledge-answer" style="display: none; margin-top: 30px;">
+                <div class="result-card">
+                    <h3>Answer</h3>
+                    <div class="output" id="knowledge-answer-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/app.js"></script>
+</body>
+</html>
