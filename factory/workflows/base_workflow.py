@@ -73,6 +73,9 @@ class BaseWorkflow(Workflow, ABC):
         Returns:
             WorkflowResult from execution
         """
+        from datetime import datetime
+        from factory.core.workflow_engine import WorkflowStatus
+
         try:
             # Setup
             logger.info(f"Setting up workflow '{self.name}'")
@@ -85,12 +88,30 @@ class BaseWorkflow(Workflow, ABC):
 
             return result
 
+        except Exception as e:
+            # Handle errors gracefully
+            logger.error(f"Workflow '{self.name}' failed: {e}")
+            return WorkflowResult(
+                workflow_id=self.workflow_id,
+                status=WorkflowStatus.FAILED,
+                started_at=datetime.now(),
+                completed_at=datetime.now(),
+                steps_total=0,
+                steps_completed=0,
+                errors=[str(e)],
+                outputs={},
+                metadata={}
+            )
+
         finally:
             # Always cleanup
             if not self._cleanup_complete:
                 logger.info(f"Cleaning up workflow '{self.name}'")
-                await self.cleanup()
-                self._cleanup_complete = True
+                try:
+                    await self.cleanup()
+                    self._cleanup_complete = True
+                except Exception as e:
+                    logger.error(f"Cleanup failed for '{self.name}': {e}")
 
     def validate_context(self, required_keys: list) -> None:
         """Validate required context keys exist.
