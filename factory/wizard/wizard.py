@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class WizardPhase(Enum):
-    """Wizard phases following Save the Cat! structure."""
+    """Wizard phases following 15-beat narrative structure."""
     FOUNDATION = "foundation"  # Genre, theme, concept
     CHARACTER = "character"    # Protagonist development
     PLOT = "plot"             # 15-beat structure
@@ -31,18 +31,18 @@ class WizardResult:
 
 class CreationWizard:
     """Conversational wizard for story development.
-    
+
     Guides writers through 5 phases:
     1. Foundation - Genre, theme, concept
     2. Character - Protagonist and supporting cast
-    3. Plot - Save the Cat! 15-beat structure
+    3. Plot - 15-beat narrative structure
     4. World - Setting and context
     5. Symbolism - Deeper thematic layers
-    
+
     Outputs 4,000-6,000 word story bible.
     """
 
-    SAVE_THE_CAT_BEATS = [
+    STORY_BEATS = [
         "Opening Image",
         "Theme Stated",
         "Setup",
@@ -95,7 +95,7 @@ class CreationWizard:
                 "Who are the key supporting characters?"
             ],
             WizardPhase.PLOT: [
-                f"Describe: {beat}" for beat in self.SAVE_THE_CAT_BEATS[:5]
+                f"Describe: {beat}" for beat in self.STORY_BEATS[:5]
             ],
             WizardPhase.WORLD: [
                 "When and where does your story take place?",
@@ -163,8 +163,8 @@ class CreationWizard:
                 bible_sections.append(f"{a}\n")
         
         # Plot Structure
-        bible_sections.append("\n## Part 3: Plot Structure (Save the Cat! 15 Beats)")
-        for beat in self.SAVE_THE_CAT_BEATS:
+        bible_sections.append("\n## Part 3: Plot Structure (15-Beat Narrative)")
+        for beat in self.STORY_BEATS:
             beat_key = f"Describe: {beat}"
             if beat_key in self.responses:
                 bible_sections.append(f"\n### {beat}")

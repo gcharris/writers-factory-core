@@ -92,15 +92,15 @@ class TestCreationWizard:
             content = output_path.read_text()
             assert "Fantasy" in content
 
-    def test_save_the_cat_beats_included(self):
-        """Test that Save the Cat! 15 beats are included."""
+    def test_story_beats_included(self):
+        """Test that 15-beat narrative structure is included."""
         with TemporaryDirectory() as tmpdir:
             wizard = CreationWizard(Path(tmpdir))
-            
-            assert len(wizard.SAVE_THE_CAT_BEATS) == 15
-            assert "Opening Image" in wizard.SAVE_THE_CAT_BEATS
-            assert "Midpoint" in wizard.SAVE_THE_CAT_BEATS
-            assert "Final Image" in wizard.SAVE_THE_CAT_BEATS
+
+            assert len(wizard.STORY_BEATS) == 15
+            assert "Opening Image" in wizard.STORY_BEATS
+            assert "Midpoint" in wizard.STORY_BEATS
+            assert "Final Image" in wizard.STORY_BEATS
 
 
 class TestWizardPhases:
