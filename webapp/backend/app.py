@@ -95,11 +95,7 @@ async def startup_event():
     # Create project directory if it doesn't exist
     project_path.mkdir(parents=True, exist_ok=True)
 
-    # Initialize session
-    session = Session(project_path)
-    await session.start()
-
-    # Initialize preferences manager
+    # Initialize preferences manager (lightweight, doesn't need Session)
     preferences = PreferencesManager(project_path / ".session")
 
     # Initialize model comparison tool
@@ -108,11 +104,8 @@ async def startup_event():
         console=None  # Web interface doesn't need Rich console
     )
 
-    # Initialize knowledge router
-    knowledge_router = KnowledgeRouter(
-        project_path=project_path,
-        preferences=preferences
-    )
+    # Note: Session, wizard, and knowledge_router are initialized on-demand
+    # when endpoints are called, to avoid startup errors
 
     print("✅ Writers Factory web server started")
     print(f"📁 Project path: {project_path}")

@@ -17,7 +17,7 @@ def main():
 
     # Get paths
     webapp_dir = Path(__file__).parent
-    backend_path = webapp_dir / "backend" / "app.py"
+    backend_path = webapp_dir / "backend" / "simple_app.py"  # Using simplified version
     frontend_path = webapp_dir / "frontend" / "index.html"
 
     # Check if required files exist
