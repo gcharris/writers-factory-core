@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "writers-factory": {
+      "command": "python",
+      "args": ["factory/mcp/run_mcp_server.py"],
+      "cwd": "/home/user/writers-factory-core",
+      "env": {
+        "PYTHONPATH": "/home/user/writers-factory-core"
+      }
+    }
+  }
+}
