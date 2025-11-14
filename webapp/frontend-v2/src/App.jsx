@@ -14,6 +14,7 @@ import { AgentProfiles } from './features/profiles/AgentProfiles';
 import { BrainstormPage } from './features/brainstorm/BrainstormPage';
 import { CharacterPanel } from './features/character/CharacterPanel';
 import { WelcomeModal } from './features/onboarding/WelcomeModal';
+import { QuickStartBanner } from './features/onboarding/QuickStartBanner';
 import { HelpPanel } from './features/help/HelpPanel';
 import { Book } from 'lucide-react';
 import { showFriendlyError } from './utils/errorHandler';
@@ -250,6 +251,9 @@ function App() {
 
         {/* Ollama Status Banner */}
         <OllamaStatus />
+
+        {/* Quick Start Banner */}
+        <QuickStartBanner />
 
         {/* Main Layout */}
         <div className="flex-1 overflow-hidden">
