@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showFriendlyError } from '../../utils/errorHandler';
 
 const TEMPLATES = [
   { id: 'generate', label: 'Generate New Scene', endpoint: '/api/scene/generate' },
@@ -35,8 +36,8 @@ export function AIToolsPanel({ currentScene, models }) {
       setResult(data);
       toast.success('Generated successfully');
     },
-    onError: () => {
-      toast.error('Generation failed');
+    onError: (error) => {
+      showFriendlyError(error, toast, { type: 'generation' });
     }
   });
 

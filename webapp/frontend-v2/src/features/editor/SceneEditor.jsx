@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { useDebounce } from '../../hooks/useDebounce';
 import { exportToMarkdown, exportToText, exportToHTML } from '../../utils/exporters';
+import { showFriendlyError } from '../../utils/errorHandler';
 
 export function SceneEditor({ sceneId }) {
   const [content, setContent] = useState('');
@@ -52,10 +53,17 @@ export function SceneEditor({ sceneId }) {
     queryKey: ['scene', sceneId],
     queryFn: async () => {
       const res = await fetch(`http://localhost:8000/api/scene/${sceneId}`);
-      if (!res.ok) throw new Error('Failed to load scene');
+      if (!res.ok) {
+        const error = new Error('Failed to load scene');
+        error.status = res.status;
+        throw error;
+      }
       return res.json();
     },
-    enabled: !!sceneId
+    enabled: !!sceneId,
+    onError: (error) => {
+      showFriendlyError(error, toast, { type: 'scene' });
+    }
   });
 
   // Update content when scene loads
@@ -82,15 +90,19 @@ export function SceneEditor({ sceneId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newContent })
       });
-      if (!res.ok) throw new Error('Save failed');
+      if (!res.ok) {
+        const error = new Error('Save failed');
+        error.status = res.status;
+        throw error;
+      }
       return res.json();
     },
     onSuccess: () => {
       setLastSaved(new Date());
       queryClient.invalidateQueries(['manuscript-tree']); // Update word counts
     },
-    onError: () => {
-      toast.error('Failed to save');
+    onError: (error) => {
+      showFriendlyError(error, toast, { type: 'scene' });
     }
   });
 

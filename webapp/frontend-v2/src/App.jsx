@@ -16,6 +16,7 @@ import { CharacterPanel } from './features/character/CharacterPanel';
 import { WelcomeModal } from './features/onboarding/WelcomeModal';
 import { HelpPanel } from './features/help/HelpPanel';
 import { Book } from 'lucide-react';
+import { showFriendlyError } from './utils/errorHandler';
 
 const queryClient = new QueryClient();
 
@@ -99,7 +100,7 @@ function App() {
       }
     } catch (error) {
       console.error('Failed to load example project:', error);
-      toast.error('Failed to load example project. Make sure the backend is running.');
+      showFriendlyError(error, toast, { type: 'generation' });
     }
   };
 

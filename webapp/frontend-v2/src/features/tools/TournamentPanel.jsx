@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showFriendlyError } from '../../utils/errorHandler';
 
 export function TournamentPanel({ currentScene, models }) {
   const [selectedModels, setSelectedModels] = useState([]);
@@ -32,8 +33,8 @@ export function TournamentPanel({ currentScene, models }) {
       setResults(data);
       toast.success('Comparison complete');
     },
-    onError: () => {
-      toast.error('Comparison failed');
+    onError: (error) => {
+      showFriendlyError(error, toast, { type: 'generation' });
     }
   });
 

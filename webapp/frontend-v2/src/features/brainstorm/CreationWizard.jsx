@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { showFriendlyError } from '../../utils/errorHandler';
 
 const PHASES = [
   { id: 'foundation', label: 'Foundation', icon: '📚' },
@@ -64,7 +65,7 @@ export function CreationWizard({ onComplete, onCancel }) {
       toast.success('Project created successfully!');
       onComplete(data);
     } catch (error) {
-      toast.error('Failed to create project');
+      showFriendlyError(error, toast, { type: 'generation' });
       console.error(error);
     }
   };

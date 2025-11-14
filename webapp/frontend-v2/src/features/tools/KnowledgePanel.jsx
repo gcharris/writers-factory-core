@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showFriendlyError } from '../../utils/errorHandler';
 
 export function KnowledgePanel() {
   const [question, setQuestion] = useState('');
@@ -21,8 +22,8 @@ export function KnowledgePanel() {
       setResult(data);
       toast.success('Query completed');
     },
-    onError: () => {
-      toast.error('Query failed');
+    onError: (error) => {
+      showFriendlyError(error, toast, { type: 'generation' });
     }
   });
 
