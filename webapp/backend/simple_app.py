@@ -21,6 +21,15 @@ from factory.agents.character_analyzer import (
     analyze_character_depth,
     analyze_protagonist_dimensionality
 )
+from factory.research.notebooklm_client import (
+    NotebookLMClient,
+    AuthenticationError,
+    NotebookNotFoundError,
+    QueryTimeoutError
+)
+import json
+import uuid
+from datetime import datetime
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -47,6 +56,9 @@ _manuscript_cache = {}
 
 # Session cost tracking
 _session_cost = {"total": 0.0, "by_model": [], "savings": 0.0}
+
+# NotebookLM client (Sprint 11)
+notebooklm_client = NotebookLMClient()
 
 
 # Economy Mode Helper
@@ -717,6 +729,271 @@ async def analyze_character(character_id: str):
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==============================================================================
+# Sprint 11: Research / NotebookLM Endpoints
+# ==============================================================================
+
+@app.post("/api/research/query")
+async def query_research(request: dict):
+    """Query a NotebookLM notebook (Sprint 11).
+
+    Request:
+        {
+            "question": str,
+            "notebook_id": str (optional - auto-selects if omitted),
+            "project_id": str
+        }
+
+    Response:
+        {
+            "success": bool,
+            "answer": str,
+            "sources": list,
+            "notebook_name": str,
+            "notebook_id": str,
+            "timestamp": str
+        }
+    """
+    try:
+        question = request.get("question")
+        notebook_id = request.get("notebook_id")
+        project_id = request.get("project_id", "explants-v1")
+
+        if not question:
+            raise HTTPException(400, "Question required")
+
+        # Load project notebooks
+        notebooks = _load_project_notebooks(project_id)
+
+        # Select notebook
+        if notebook_id:
+            notebook = next((nb for nb in notebooks if nb["id"] == notebook_id), None)
+            if not notebook:
+                raise HTTPException(404, "Notebook not found")
+        else:
+            # Auto-select based on tags/relevance
+            notebook = _auto_select_notebook(question, notebooks)
+            if not notebook:
+                raise HTTPException(400, "No notebooks available. Add a notebook first.")
+
+        # Query NotebookLM
+        result = await notebooklm_client.query(question, notebook["url"])
+
+        return {
+            "success": True,
+            "answer": result["answer"],
+            "sources": result["sources"],
+            "notebook_name": result["notebook_name"],
+            "notebook_id": notebook["id"],
+            "timestamp": result["timestamp"]
+        }
+
+    except AuthenticationError:
+        raise HTTPException(401, "Not authenticated. Please connect NotebookLM first.")
+    except NotebookNotFoundError as e:
+        raise HTTPException(404, f"Notebook not accessible: {str(e)}")
+    except QueryTimeoutError as e:
+        raise HTTPException(408, f"Query timed out: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Query failed: {str(e)}")
+
+
+@app.get("/api/research/notebooks")
+async def list_notebooks(project_id: str = "explants-v1"):
+    """List all notebooks for a project (Sprint 11).
+
+    Query params:
+        project_id: Project identifier
+
+    Response:
+        {
+            "notebooks": [
+                {
+                    "id": str,
+                    "name": str,
+                    "url": str,
+                    "description": str,
+                    "tags": list,
+                    "created_at": str
+                }
+            ]
+        }
+    """
+    try:
+        notebooks = _load_project_notebooks(project_id)
+        return {"notebooks": notebooks}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.post("/api/research/notebooks")
+async def add_notebook(request: dict):
+    """Add a notebook to a project (Sprint 11).
+
+    Request:
+        {
+            "project_id": str,
+            "name": str,
+            "url": str,
+            "description": str (optional),
+            "tags": list (optional)
+        }
+    """
+    try:
+        project_id = request.get("project_id", "explants-v1")
+        name = request.get("name")
+        url = request.get("url")
+        description = request.get("description", "")
+        tags = request.get("tags", [])
+
+        if not all([name, url]):
+            raise HTTPException(400, "name and url required")
+
+        # Validate URL
+        if not url.startswith("https://notebooklm.google.com/notebook/"):
+            raise HTTPException(400, "Invalid NotebookLM URL. Must start with https://notebooklm.google.com/notebook/")
+
+        # Load existing notebooks
+        notebooks = _load_project_notebooks(project_id)
+
+        # Create new notebook entry
+        notebook = {
+            "id": str(uuid.uuid4()),
+            "name": name,
+            "url": url,
+            "description": description,
+            "tags": tags,
+            "created_at": datetime.now().isoformat()
+        }
+
+        notebooks.append(notebook)
+
+        # Save
+        _save_project_notebooks(project_id, notebooks)
+
+        return {"success": True, "notebook": notebook}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.put("/api/research/notebooks/{notebook_id}")
+async def update_notebook(notebook_id: str, request: dict):
+    """Update a notebook's metadata (Sprint 11)."""
+    try:
+        project_id = request.get("project_id", "explants-v1")
+        notebooks = _load_project_notebooks(project_id)
+
+        notebook = next((nb for nb in notebooks if nb["id"] == notebook_id), None)
+        if not notebook:
+            raise HTTPException(404, "Notebook not found")
+
+        # Update fields
+        if "name" in request:
+            notebook["name"] = request["name"]
+        if "description" in request:
+            notebook["description"] = request["description"]
+        if "tags" in request:
+            notebook["tags"] = request["tags"]
+
+        _save_project_notebooks(project_id, notebooks)
+
+        return {"success": True, "notebook": notebook}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.delete("/api/research/notebooks/{notebook_id}")
+async def delete_notebook(notebook_id: str, project_id: str = "explants-v1"):
+    """Delete a notebook from a project (Sprint 11)."""
+    try:
+        notebooks = _load_project_notebooks(project_id)
+        notebooks = [nb for nb in notebooks if nb["id"] != notebook_id]
+        _save_project_notebooks(project_id, notebooks)
+
+        return {"success": True}
+
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.get("/api/research/auth/status")
+async def get_auth_status():
+    """Check if NotebookLM is authenticated (Sprint 11)."""
+    try:
+        is_authenticated = await notebooklm_client._is_authenticated()
+        return {
+            "authenticated": is_authenticated,
+            "service": "NotebookLM"
+        }
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.post("/api/research/auth/login")
+async def initiate_auth():
+    """Initiate NotebookLM authentication flow (Sprint 11)."""
+    try:
+        success = await notebooklm_client.authenticate()
+        return {
+            "success": success,
+            "message": "Authentication complete" if success else "Authentication failed"
+        }
+    except Exception as e:
+        raise HTTPException(500, f"Authentication failed: {str(e)}")
+
+
+# Helper Functions for Research Endpoints
+
+def _load_project_notebooks(project_id: str) -> list:
+    """Load notebooks for a project."""
+    # Support both old and new path structures
+    notebooks_file = project_path / ".manuscript" / project_id / "notebooks.json"
+
+    # Fallback to root project path
+    if not notebooks_file.exists():
+        notebooks_file = project_path / project_id / "notebooks.json"
+
+    if not notebooks_file.exists():
+        return []
+
+    with open(notebooks_file, "r") as f:
+        return json.load(f)
+
+
+def _save_project_notebooks(project_id: str, notebooks: list):
+    """Save notebooks for a project."""
+    # Use manuscript directory
+    project_dir = project_path / ".manuscript" / project_id
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    notebooks_file = project_dir / "notebooks.json"
+
+    with open(notebooks_file, "w") as f:
+        json.dump(notebooks, f, indent=2)
+
+
+def _auto_select_notebook(question: str, notebooks: list) -> dict:
+    """Auto-select most relevant notebook based on question.
+
+    Simple implementation: return first notebook.
+    Advanced: Use embedding similarity or keyword matching.
+    """
+    if not notebooks:
+        return None
+
+    # Simple: return first notebook
+    # TODO: Implement smart selection based on tags/keywords
+    return notebooks[0]
 
 
 # Sprint 10: File Operations Endpoints

@@ -25,6 +25,9 @@ python-dotenv>=1.0.0
 tenacity>=8.2.3
 tiktoken>=0.5.2
 
+# Research Tools (Sprint 11)
+playwright>=1.40.0  # For NotebookLM browser automation
+
 # Testing
 pytest>=7.4.3
 pytest-asyncio>=0.21.1

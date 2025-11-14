@@ -390,7 +390,89 @@ class WritersFactoryMCP:
             }
 
         print("[MCP] Registered 2 knowledge base tools", file=sys.stderr)
-        print("[MCP] Total tools registered: 10", file=sys.stderr)
+
+        # Sprint 11: Research / NotebookLM Tools
+        @self.server.tool()
+        async def query_notebooklm(question: str, notebook_name: str = None) -> dict:
+            """Query NotebookLM for research answers with citations.
+
+            Use this tool to ask questions about research materials stored in NotebookLM
+            notebooks. Returns answers with source citations from the documents.
+
+            Args:
+                question: The question to ask
+                notebook_name: Optional notebook name (auto-selects if omitted)
+
+            Returns:
+                {
+                    "success": bool,
+                    "answer": str,
+                    "sources": list,
+                    "notebook_name": str
+                }
+            """
+            try:
+                # Get current project ID (from context or default)
+                project_id = "explants-v1"  # TODO: Get from context
+
+                response = await self.client.post(
+                    f"{self.backend_url}/api/research/query",
+                    json={
+                        "question": question,
+                        "notebook_id": None,  # Auto-select
+                        "project_id": project_id
+                    }
+                )
+                response.raise_for_status()
+                return response.json()
+
+            except httpx.HTTPError as e:
+                print(f"[MCP] Error querying NotebookLM: {e}", file=sys.stderr)
+                return {"success": False, "error": str(e)}
+            except Exception as e:
+                print(f"[MCP] Unexpected error querying NotebookLM: {e}", file=sys.stderr)
+                return {"success": False, "error": str(e)}
+
+        @self.server.tool()
+        async def list_research_notebooks(project_id: str = "explants-v1") -> dict:
+            """List available NotebookLM notebooks for research.
+
+            Returns all notebooks configured for the project, including their
+            names, descriptions, and tags.
+
+            Args:
+                project_id: Project identifier (default: explants-v1)
+
+            Returns:
+                {
+                    "notebooks": [
+                        {
+                            "id": str,
+                            "name": str,
+                            "url": str,
+                            "description": str,
+                            "tags": list
+                        }
+                    ]
+                }
+            """
+            try:
+                response = await self.client.get(
+                    f"{self.backend_url}/api/research/notebooks",
+                    params={"project_id": project_id}
+                )
+                response.raise_for_status()
+                return response.json()
+
+            except httpx.HTTPError as e:
+                print(f"[MCP] Error listing notebooks: {e}", file=sys.stderr)
+                return {"error": str(e)}
+            except Exception as e:
+                print(f"[MCP] Unexpected error listing notebooks: {e}", file=sys.stderr)
+                return {"error": str(e)}
+
+        print("[MCP] Registered 2 NotebookLM research tools", file=sys.stderr)
+        print("[MCP] Total tools registered: 12", file=sys.stderr)
 
     def register_resources(self):
         """Register MCP resources.

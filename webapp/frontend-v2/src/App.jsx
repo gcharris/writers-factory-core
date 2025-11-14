@@ -13,6 +13,7 @@ import { CostDashboard } from './features/cost/CostDashboard';
 import { AgentProfiles } from './features/profiles/AgentProfiles';
 import { BrainstormPage } from './features/brainstorm/BrainstormPage';
 import { CharacterPanel } from './features/character/CharacterPanel';
+import { ResearchPanel } from './features/research/ResearchPanel';
 import { WelcomeModal } from './features/onboarding/WelcomeModal';
 import { QuickStartBanner } from './features/onboarding/QuickStartBanner';
 import { HelpPanel } from './features/help/HelpPanel';
@@ -25,7 +26,7 @@ function App() {
   const [showSetup, setShowSetup] = useState(false);
   const [hasManuscript, setHasManuscript] = useState(null); // null = loading, true/false = determined
   const [selectedScene, setSelectedScene] = useState(null);
-  const [rightPanel, setRightPanel] = useState('tools'); // 'tools' | 'knowledge' | 'tournament' | 'character'
+  const [rightPanel, setRightPanel] = useState('tools'); // 'tools' | 'knowledge' | 'tournament' | 'character' | 'research'
   const [models, setModels] = useState([]);
   const [economyMode, setEconomyMode] = useState(() => {
     const saved = localStorage.getItem('economy_mode');
@@ -201,6 +202,12 @@ function App() {
             >
               Character
             </button>
+            <button
+              onClick={() => setRightPanel('research')}
+              className={`px-3 py-1 rounded text-sm ${rightPanel === 'research' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+            >
+              Research
+            </button>
 
             {/* Separator */}
             <div className="h-6 w-px bg-gray-600" />
@@ -278,6 +285,7 @@ function App() {
               {rightPanel === 'knowledge' && <KnowledgePanel />}
               {rightPanel === 'tournament' && <TournamentPanel currentScene={selectedScene} models={models} />}
               {rightPanel === 'character' && <CharacterPanel />}
+              {rightPanel === 'research' && <ResearchPanel projectId="explants-v1" />}
             </Panel>
           </PanelGroup>
         </div>
