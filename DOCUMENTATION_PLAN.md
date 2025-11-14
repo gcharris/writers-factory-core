@@ -2,7 +2,7 @@
 
 **Date**: November 14, 2025
 **Purpose**: Document Writers Factory for public GitHub release
-**Timeline**: Complete by mid-December 2025
+**Timeline**: 2 months to January course (plenty of time for polish, testing, improvements)
 
 ---
 
@@ -478,25 +478,43 @@ MIT
 
 ## Implementation Timeline
 
-### Week 1 (Nov 18-22): Critical Updates
-- [ ] Cloud Agent: Update helpContent.js for TipTap (Sprint 7R-06)
-- [ ] Cloud Agent: Add Creation Wizard, NotebookLM, MCP topics to help
-- [ ] Me: Create README.md (quick start guide)
+### Phase 1: Test & Polish (Nov 18-29)
+**Goal**: Actually use Writers Factory, find bugs, improve UX
 
-### Week 2 (Nov 25-29): Support Documentation
-- [ ] Me: Create TROUBLESHOOTING.md
-- [ ] Me: Create QUICK_REFERENCE.md
-- [ ] Me: Create CHARACTER_DEPTH_GUIDE.md
+- [ ] Test complete workflow (Creation Wizard → Scene writing → Export)
+- [ ] Test with Ollama (local models)
+- [ ] Test with cloud models (Claude, GPT, Gemini)
+- [ ] Test Character Panel depth analysis
+- [ ] Test export functions
+- [ ] Identify bugs and UX issues
+- [ ] Fix critical bugs
+- [ ] Polish rough edges
 
-### Week 3 (Dec 2-6): Advanced Guides
-- [ ] Me: Create MCP_SETUP_GUIDE.md
-- [ ] Me: Create MODEL_SELECTION_GUIDE.md
-- [ ] Test all documentation (have someone follow guides)
+### Phase 2: Core Documentation (Dec 2-13)
+**Goal**: Document what actually works (after testing)
 
-### Week 4 (Dec 9-13): Polish & Finalize
-- [ ] Revise based on testing feedback
-- [ ] Create PDF versions of quick reference
-- [ ] Review for consistency and completeness
+- [ ] Create README.md (installation + quick start)
+- [ ] Update helpContent.js (TipTap editor, Creation Wizard, NotebookLM, MCP)
+- [ ] Create TROUBLESHOOTING.md
+- [ ] Create QUICK_REFERENCE.md
+
+### Phase 3: Advanced Features (Dec 16-27)
+**Goal**: Add missing features, write advanced guides
+
+- [ ] Implement any critical missing features
+- [ ] Create CHARACTER_DEPTH_GUIDE.md
+- [ ] Create MCP_SETUP_GUIDE.md
+- [ ] Create MODEL_SELECTION_GUIDE.md
+- [ ] Test everything again
+
+### Phase 4: Course Prep (Jan 2-10)
+**Goal**: Course-specific materials, final polish
+
+- [ ] Create course student guide (separate, not in repo)
+- [ ] Create pre-course setup checklist
+- [ ] Test on Windows/Mac/Linux
+- [ ] Prepare backup materials
+- [ ] Final bug fixes
 
 ---
 
