@@ -17,6 +17,10 @@ from factory.core.config.loader import load_agent_config, get_enabled_agents
 from webapp.backend.agent_integration import get_bridge
 from factory.core.manuscript import Manuscript, ManuscriptStorage
 from factory.agents.ollama_agent import OllamaAgent
+from factory.agents.character_analyzer import (
+    analyze_character_depth,
+    analyze_protagonist_dimensionality
+)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -567,6 +571,114 @@ async def ollama_status():
             "models": [],
             "error": str(e)
         }
+
+
+# Character Analysis Endpoints
+@app.get("/api/manuscript/{manuscript_id}/characters")
+async def get_characters(manuscript_id: str):
+    """Get all characters in manuscript."""
+    try:
+        manuscript = _manuscript_cache.get('current')
+        if not manuscript:
+            # Try to load from storage
+            manuscript_path = project_path / ".manuscript" / manuscript_id
+            if manuscript_path.exists():
+                storage = ManuscriptStorage(manuscript_path)
+                manuscript = storage.load()
+                _manuscript_cache['current'] = manuscript
+
+        if not manuscript or not hasattr(manuscript, 'characters'):
+            return {"characters": []}
+
+        # Return character data
+        return {
+            "characters": [
+                {
+                    "id": char.id,
+                    "name": char.name,
+                    "role": char.role,
+                    "core_traits": char.core_traits,
+                    "observable_traits": char.observable_traits,
+                    "values": char.values,
+                    "fears": char.fears,
+                    "fatal_flaw": char.fatal_flaw,
+                    "mistaken_belief": char.mistaken_belief,
+                    "reveals_protagonist_dimension": char.reveals_protagonist_dimension,
+                    "serves_protagonist_goal": char.serves_protagonist_goal
+                }
+                for char in manuscript.characters
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/character/{character_id}/analyze")
+async def analyze_character(character_id: str):
+    """Analyze character for dimensional depth."""
+    try:
+        manuscript = _manuscript_cache.get('current')
+        if not manuscript:
+            raise HTTPException(status_code=404, detail="No manuscript loaded")
+
+        # Find character
+        character = None
+        for char in manuscript.characters:
+            if char.id == character_id:
+                character = char
+                break
+
+        if not character:
+            raise HTTPException(status_code=404, detail="Character not found")
+
+        # Convert to dict for analyzer
+        character_data = {
+            "id": character.id,
+            "name": character.name,
+            "role": character.role,
+            "core_traits": character.core_traits,
+            "observable_traits": character.observable_traits,
+            "values": character.values,
+            "fears": character.fears,
+            "fatal_flaw": character.fatal_flaw,
+            "mistaken_belief": character.mistaken_belief,
+            "reveals_protagonist_dimension": character.reveals_protagonist_dimension,
+            "serves_protagonist_goal": character.serves_protagonist_goal
+        }
+
+        # Run analysis
+        results = analyze_character_depth(character_data)
+
+        # If protagonist, also check dimensionality vs supporting cast
+        if character.role == "protagonist":
+            supporting_cast = [
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "core_traits": c.core_traits,
+                    "observable_traits": c.observable_traits,
+                    "values": c.values,
+                    "fears": c.fears,
+                    "fatal_flaw": c.fatal_flaw,
+                    "mistaken_belief": c.mistaken_belief,
+                    "reveals_protagonist_dimension": c.reveals_protagonist_dimension
+                }
+                for c in manuscript.characters if c.role == "supporting"
+            ]
+
+            if supporting_cast:
+                dimensionality_results = analyze_protagonist_dimensionality(
+                    character_data,
+                    supporting_cast
+                )
+
+                # Add protagonist-specific flags
+                if not dimensionality_results["is_most_dimensional"]:
+                    results["flags"].extend(dimensionality_results["flags"])
+
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

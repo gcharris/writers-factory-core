@@ -12,6 +12,7 @@ import { OllamaStatus } from './features/ollama/OllamaStatus';
 import { CostDashboard } from './features/cost/CostDashboard';
 import { AgentProfiles } from './features/profiles/AgentProfiles';
 import { BrainstormPage } from './features/brainstorm/BrainstormPage';
+import { CharacterPanel } from './features/character/CharacterPanel';
 
 const queryClient = new QueryClient();
 
@@ -19,7 +20,7 @@ function App() {
   const [showSetup, setShowSetup] = useState(false);
   const [hasManuscript, setHasManuscript] = useState(null); // null = loading, true/false = determined
   const [selectedScene, setSelectedScene] = useState(null);
-  const [rightPanel, setRightPanel] = useState('tools'); // 'tools' | 'knowledge' | 'tournament'
+  const [rightPanel, setRightPanel] = useState('tools'); // 'tools' | 'knowledge' | 'tournament' | 'character'
   const [models, setModels] = useState([]);
   const [economyMode, setEconomyMode] = useState(() => {
     const saved = localStorage.getItem('economy_mode');
@@ -132,6 +133,12 @@ function App() {
             >
               Tournament
             </button>
+            <button
+              onClick={() => setRightPanel('character')}
+              className={`px-3 py-1 rounded text-sm ${rightPanel === 'character' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+            >
+              Character
+            </button>
 
             {/* Separator */}
             <div className="h-6 w-px bg-gray-600" />
@@ -195,6 +202,7 @@ function App() {
               {rightPanel === 'tools' && <AIToolsPanel currentScene={selectedScene} models={models} />}
               {rightPanel === 'knowledge' && <KnowledgePanel />}
               {rightPanel === 'tournament' && <TournamentPanel currentScene={selectedScene} models={models} />}
+              {rightPanel === 'character' && <CharacterPanel />}
             </Panel>
           </PanelGroup>
         </div>
