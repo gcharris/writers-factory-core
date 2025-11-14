@@ -8,6 +8,9 @@ import { AIToolsPanel } from './features/tools/AIToolsPanel';
 import { KnowledgePanel } from './features/tools/KnowledgePanel';
 import { TournamentPanel } from './features/tools/TournamentPanel';
 import { SetupWizard } from './features/setup/SetupWizard';
+import { OllamaStatus } from './features/ollama/OllamaStatus';
+import { CostDashboard } from './features/cost/CostDashboard';
+import { AgentProfiles } from './features/profiles/AgentProfiles';
 
 const queryClient = new QueryClient();
 
@@ -16,6 +19,12 @@ function App() {
   const [selectedScene, setSelectedScene] = useState(null);
   const [rightPanel, setRightPanel] = useState('tools'); // 'tools' | 'knowledge' | 'tournament'
   const [models, setModels] = useState([]);
+  const [economyMode, setEconomyMode] = useState(() => {
+    const saved = localStorage.getItem('economy_mode');
+    return saved === 'true';
+  });
+  const [showCostDashboard, setShowCostDashboard] = useState(false);
+  const [showAgentProfiles, setShowAgentProfiles] = useState(false);
 
   useEffect(() => {
     // Check if setup needed
@@ -30,6 +39,12 @@ function App() {
       .then(data => setModels(data.models || []))
       .catch(err => console.error('Failed to load models:', err));
   }, []);
+
+  const toggleEconomyMode = () => {
+    const newMode = !economyMode;
+    setEconomyMode(newMode);
+    localStorage.setItem('economy_mode', newMode.toString());
+  };
 
   if (showSetup) {
     return (
@@ -70,8 +85,46 @@ function App() {
             >
               Tournament
             </button>
+
+            {/* Separator */}
+            <div className="h-6 w-px bg-gray-600" />
+
+            {/* Economy Mode Toggle */}
+            <button
+              onClick={toggleEconomyMode}
+              className={`px-3 py-1 rounded text-sm flex items-center gap-2 ${
+                economyMode
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-gray-700 hover:bg-gray-600'
+              }`}
+              title={economyMode ? 'Economy mode ON - prefer local models' : 'Economy mode OFF'}
+            >
+              <span>{economyMode ? '💰' : '💸'}</span>
+              <span>Economy</span>
+            </button>
+
+            {/* Cost Dashboard Button */}
+            <button
+              onClick={() => setShowCostDashboard(true)}
+              className="px-3 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600"
+              title="View cost breakdown"
+            >
+              💵 Cost
+            </button>
+
+            {/* Agent Profiles Button */}
+            <button
+              onClick={() => setShowAgentProfiles(true)}
+              className="px-3 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600"
+              title="Configure agent preferences"
+            >
+              ⚙️ Profiles
+            </button>
           </div>
         </div>
+
+        {/* Ollama Status Banner */}
+        <OllamaStatus />
 
         {/* Main Layout */}
         <div className="flex-1 overflow-hidden">
@@ -99,6 +152,13 @@ function App() {
           </PanelGroup>
         </div>
       </div>
+
+      {/* Cost Dashboard Modal */}
+      {showCostDashboard && <CostDashboard onClose={() => setShowCostDashboard(false)} />}
+
+      {/* Agent Profiles Modal */}
+      {showAgentProfiles && <AgentProfiles models={models} onClose={() => setShowAgentProfiles(false)} />}
+
       <Toaster position="top-right" theme="dark" />
     </QueryClientProvider>
   );

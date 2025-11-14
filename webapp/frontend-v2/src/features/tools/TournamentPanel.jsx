@@ -47,20 +47,58 @@ export function TournamentPanel({ currentScene, models }) {
           <label className="text-sm text-gray-400 mb-2 block">
             Select 2-4 models ({selectedModels.length}/4)
           </label>
-          <div className="space-y-1 max-h-32 overflow-y-auto">
-            {models.slice(0, 10).map(model => (
-              <button
-                key={model.id}
-                onClick={() => toggleModel(model.id)}
-                className={`w-full text-left px-2 py-1 rounded text-xs ${
-                  selectedModels.includes(model.id)
-                    ? 'bg-blue-600'
-                    : 'bg-gray-700 hover:bg-gray-600'
-                }`}
-              >
-                {model.id}
-              </button>
-            ))}
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {/* Local Models */}
+            {models.filter(m => m.is_local).length > 0 && (
+              <div>
+                <div className="text-xs text-green-400 font-semibold mb-1 px-2">
+                  🦙 Local Models (FREE)
+                </div>
+                <div className="space-y-1">
+                  {models.filter(m => m.is_local).map(model => (
+                    <button
+                      key={model.id}
+                      onClick={() => toggleModel(model.id)}
+                      className={`w-full text-left px-2 py-1 rounded text-xs flex items-center justify-between ${
+                        selectedModels.includes(model.id)
+                          ? 'bg-blue-600'
+                          : 'bg-gray-700 hover:bg-gray-600'
+                      }`}
+                    >
+                      <span>{model.id}</span>
+                      <span className="text-green-400 font-semibold">FREE</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cloud Models */}
+            {models.filter(m => !m.is_local).length > 0 && (
+              <div>
+                <div className="text-xs text-blue-400 font-semibold mb-1 px-2">
+                  ☁️ Cloud Models
+                </div>
+                <div className="space-y-1">
+                  {models.filter(m => !m.is_local).slice(0, 10).map(model => (
+                    <button
+                      key={model.id}
+                      onClick={() => toggleModel(model.id)}
+                      className={`w-full text-left px-2 py-1 rounded text-xs flex items-center justify-between ${
+                        selectedModels.includes(model.id)
+                          ? 'bg-blue-600'
+                          : 'bg-gray-700 hover:bg-gray-600'
+                      }`}
+                    >
+                      <span>{model.id}</span>
+                      <span className="text-gray-400 text-xs">
+                        ${((model.cost_input || 0) + (model.cost_output || 0)).toFixed(4)}/1k
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

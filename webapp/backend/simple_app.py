@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from factory.core.config.loader import load_agent_config, get_enabled_agents
 from webapp.backend.agent_integration import get_bridge
 from factory.core.manuscript import Manuscript, ManuscriptStorage
+from factory.agents.ollama_agent import OllamaAgent
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -39,6 +40,49 @@ project_path.mkdir(parents=True, exist_ok=True)
 
 # Manuscript cache
 _manuscript_cache = {}
+
+# Session cost tracking
+_session_cost = {"total": 0.0, "by_model": [], "savings": 0.0}
+
+
+# Economy Mode Helper
+def select_agent_for_task(task_type: str, economy_mode: bool = False) -> str:
+    """Select the best agent for a task based on economy mode.
+
+    Args:
+        task_type: Type of task ('draft', 'polish', 'dialogue', 'brainstorm', 'enhance')
+        economy_mode: If True, prefer local models for cost savings
+
+    Returns:
+        Agent name (model ID)
+    """
+    agents = get_enabled_agents()
+
+    # Get local and cloud models
+    local_models = [name for name, config in agents.items() if config.get("is_local", False)]
+    cloud_models = [name for name, config in agents.items() if not config.get("is_local", False)]
+
+    if economy_mode and local_models:
+        # Prefer local models for economy mode
+        if task_type in ["draft", "brainstorm", "dialogue"]:
+            # Use fastest local model for drafts/brainstorming
+            return local_models[0] if local_models else cloud_models[0]
+        elif task_type in ["enhance", "polish"]:
+            # Use best local model (mistral if available)
+            for model in local_models:
+                if "mistral" in model.lower():
+                    return model
+            return local_models[0] if local_models else cloud_models[0]
+
+    # Default to best cloud model for quality
+    if task_type == "polish":
+        # Use best quality for polish
+        for model in cloud_models:
+            if "opus" in model.lower() or "sonnet-4.5" in model.lower():
+                return model
+
+    # Default to first available cloud model
+    return cloud_models[0] if cloud_models else (local_models[0] if local_models else "claude-sonnet-4.5")
 
 
 # Request/Response Models
@@ -279,7 +323,9 @@ async def get_available_models():
                 "description": agent_config.get("description"),
                 "cost_input": agent_config.get("cost_per_1k_input"),
                 "cost_output": agent_config.get("cost_per_1k_output"),
-                "strengths": agent_config.get("strengths", [])
+                "strengths": agent_config.get("strengths", []),
+                "is_local": agent_config.get("is_local", False),  # NEW
+                "endpoint": agent_config.get("endpoint")
             })
 
         return {"models": models}
@@ -405,9 +451,21 @@ async def session_status():
     return {
         "active": True,
         "session_id": "demo-session",
-        "total_cost": 0.0,
+        "total_cost": _session_cost["total"],
         "stage": "creation",
         "last_save": None
+    }
+
+
+@app.get("/api/session/cost")
+async def session_cost():
+    """Get detailed cost breakdown for current session."""
+    return {
+        "total_cost": _session_cost["total"],
+        "by_model": _session_cost["by_model"],
+        "savings": _session_cost["savings"],
+        "local_generations": sum(1 for m in _session_cost["by_model"] if m.get("is_local", False)),
+        "cloud_generations": sum(1 for m in _session_cost["by_model"] if not m.get("is_local", False))
     }
 
 
@@ -415,6 +473,34 @@ async def session_status():
 async def session_save():
     """Manually save session."""
     return {"success": True}
+
+
+# Ollama Management Endpoints
+@app.get("/api/ollama/status")
+async def ollama_status():
+    """Check if Ollama is running and list models."""
+    try:
+        is_running = OllamaAgent.is_available()
+
+        if not is_running:
+            return {
+                "available": False,
+                "models": [],
+                "message": "Ollama not running. Start with: brew services start ollama"
+            }
+
+        models = OllamaAgent.list_models()
+        return {
+            "available": True,
+            "models": models,
+            "endpoint": "http://localhost:11434"
+        }
+    except Exception as e:
+        return {
+            "available": False,
+            "models": [],
+            "error": str(e)
+        }
 
 
 if __name__ == "__main__":

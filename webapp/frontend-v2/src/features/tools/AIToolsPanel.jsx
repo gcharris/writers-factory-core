@@ -70,11 +70,27 @@ export function AIToolsPanel({ currentScene, models }) {
             onChange={(e) => setSelectedModel(e.target.value)}
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
           >
-            {models.map(model => (
-              <option key={model.id} value={model.id}>
-                {model.id}
-              </option>
-            ))}
+            {/* Local Models */}
+            {models.filter(m => m.is_local).length > 0 && (
+              <optgroup label="🦙 Local Models (FREE)">
+                {models.filter(m => m.is_local).map(model => (
+                  <option key={model.id} value={model.id}>
+                    {model.id} - FREE
+                  </option>
+                ))}
+              </optgroup>
+            )}
+
+            {/* Cloud Models */}
+            {models.filter(m => !m.is_local).length > 0 && (
+              <optgroup label="☁️ Cloud Models">
+                {models.filter(m => !m.is_local).map(model => (
+                  <option key={model.id} value={model.id}>
+                    {model.id} - ${((model.cost_input || 0) + (model.cost_output || 0)).toFixed(4)}/1k
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </div>
 
