@@ -240,7 +240,10 @@ async def get_scene(scene_id: str):
 
 @app.put("/api/scene/{scene_id}")
 async def update_scene(scene_id: str, request: dict):
-    """Update scene content (for autosave)."""
+    """Update scene content (for autosave).
+
+    NEW BEHAVIOR (Sprint 9): Writes directly to .md file
+    """
     try:
         content = request.get("content", "")
 
@@ -254,26 +257,24 @@ async def update_scene(scene_id: str, request: dict):
         if not manuscript:
             raise HTTPException(status_code=404, detail="No manuscript loaded")
 
-        # Find and update scene
-        for act in manuscript.acts:
-            for chapter in act.chapters:
-                for scene in chapter.scenes:
-                    if scene.id == scene_id:
-                        scene.update_content(content)
+        # Update content directly to file (Sprint 9)
+        manuscript_path = project_path / ".manuscript" / "explants-v1"
+        storage = ManuscriptStorage(manuscript_path)
+        success = storage.save_scene(manuscript, scene_id, content)
 
-                        # Save manuscript
-                        manuscript_path = project_path / ".manuscript" / "explants-v1"
-                        storage = ManuscriptStorage(manuscript_path)
-                        success = storage.save(manuscript)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save scene to file")
 
-                        if success:
-                            return {
-                                "success": True,
-                                "word_count": scene.word_count,
-                                "saved_at": "now"
-                            }
-                        else:
-                            raise HTTPException(status_code=500, detail="Failed to save")
+        # Get updated scene for word count
+        scene = manuscript.get_scene(scene_id)
+        if not scene:
+            raise HTTPException(status_code=404, detail="Scene not found")
+
+        return {
+            "success": True,
+            "word_count": scene.word_count,
+            "saved_at": "now"
+        }
 
         raise HTTPException(status_code=404, detail="Scene not found")
     except HTTPException:

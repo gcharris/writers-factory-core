@@ -20,10 +20,11 @@ class Scene:
     Attributes:
         id: Unique identifier
         title: Scene title
-        content: Scene text content
+        content: Scene text content (optional - may be loaded from file)
         word_count: Number of words in content
         notes: Optional notes about the scene
         metadata: Additional metadata (tags, status, etc.)
+        file_path: Path to scene's .md file (relative to manuscript root)
     """
 
     id: str
@@ -32,6 +33,7 @@ class Scene:
     word_count: int = 0
     notes: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
+    file_path: Optional[str] = None  # Path to .md file for file-based storage
 
     def __post_init__(self):
         """Calculate word count if not provided."""
@@ -47,20 +49,30 @@ class Scene:
         self.content = content
         self.word_count = len(content.split())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, include_content: bool = True) -> Dict[str, Any]:
         """Convert to dictionary for serialization.
+
+        Args:
+            include_content: If False, excludes content (for manifest-only export)
 
         Returns:
             Dictionary representation
         """
-        return {
+        data = {
             "id": self.id,
             "title": self.title,
-            "content": self.content,
             "word_count": self.word_count,
             "notes": self.notes,
             "metadata": self.metadata,
         }
+
+        if self.file_path:
+            data["file_path"] = self.file_path
+
+        if include_content:
+            data["content"] = self.content
+
+        return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Scene":
@@ -79,6 +91,7 @@ class Scene:
             word_count=data.get("word_count", 0),
             notes=data.get("notes", ""),
             metadata=data.get("metadata", {}),
+            file_path=data.get("file_path"),
         )
 
 
@@ -157,8 +170,11 @@ class Chapter:
         """
         return sum(scene.word_count for scene in self.scenes)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, include_content: bool = True) -> Dict[str, Any]:
         """Convert to dictionary for serialization.
+
+        Args:
+            include_content: If False, excludes scene content (for manifest-only export)
 
         Returns:
             Dictionary representation
@@ -166,7 +182,7 @@ class Chapter:
         return {
             "id": self.id,
             "title": self.title,
-            "scenes": [scene.to_dict() for scene in self.scenes],
+            "scenes": [scene.to_dict(include_content=include_content) for scene in self.scenes],
             "notes": self.notes,
             "metadata": self.metadata,
         }
@@ -264,8 +280,11 @@ class Act:
         """
         return sum(chapter.total_word_count for chapter in self.chapters)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, include_content: bool = True) -> Dict[str, Any]:
         """Convert to dictionary for serialization.
+
+        Args:
+            include_content: If False, excludes scene content (for manifest-only export)
 
         Returns:
             Dictionary representation
@@ -273,7 +292,7 @@ class Act:
         return {
             "id": self.id,
             "title": self.title,
-            "chapters": [chapter.to_dict() for chapter in self.chapters],
+            "chapters": [chapter.to_dict(include_content=include_content) for chapter in self.chapters],
             "notes": self.notes,
             "metadata": self.metadata,
         }
@@ -611,8 +630,11 @@ class Manuscript:
                 return True
         return False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, include_content: bool = True) -> Dict[str, Any]:
         """Convert to dictionary for serialization.
+
+        Args:
+            include_content: If False, excludes scene content (for manifest-only export)
 
         Returns:
             Dictionary representation
@@ -620,7 +642,7 @@ class Manuscript:
         return {
             "title": self.title,
             "author": self.author,
-            "acts": [act.to_dict() for act in self.acts],
+            "acts": [act.to_dict(include_content=include_content) for act in self.acts],
             "characters": [char.to_dict() for char in self.characters],
             "notes": self.notes,
             "metadata": self.metadata,
