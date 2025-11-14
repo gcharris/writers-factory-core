@@ -27,6 +27,12 @@ from factory.research.notebooklm_client import (
     NotebookNotFoundError,
     QueryTimeoutError
 )
+from factory.core.skill_orchestrator import (
+    SkillOrchestrator,
+    SkillRequest,
+    SkillProvider,
+    SkillStatus
+)
 import json
 import uuid
 from datetime import datetime
@@ -59,6 +65,12 @@ _session_cost = {"total": 0.0, "by_model": [], "savings": 0.0}
 
 # NotebookLM client (Sprint 11)
 notebooklm_client = NotebookLMClient()
+
+# Skill Orchestrator (Sprint 12)
+skill_orchestrator = SkillOrchestrator(
+    user_tier="premium",  # TODO: Get from user session
+    knowledge_path=project_path / "knowledge"
+)
 
 
 # Economy Mode Helper
@@ -994,6 +1006,159 @@ def _auto_select_notebook(question: str, notebooks: list) -> dict:
     # Simple: return first notebook
     # TODO: Implement smart selection based on tags/keywords
     return notebooks[0]
+
+
+# ==============================================================================
+# Sprint 12: Universal Skill System Endpoints
+# ==============================================================================
+
+@app.post("/api/skills/execute")
+async def execute_skill(request: dict):
+    """Execute any skill via orchestrator (Sprint 12).
+
+    Request:
+        {
+            "skill_name": str,  # e.g., "scene-analyzer", "scene-enhancer"
+            "input_data": dict,  # Skill-specific input
+            "context": dict (optional),  # Additional context
+            "allow_fallback": bool (default: true),  # Allow fallback providers
+            "preferred_provider": str (optional)  # Force specific provider
+        }
+
+    Response:
+        {
+            "status": "success" | "error" | "fallback",
+            "data": {...},  # Skill output
+            "metadata": {
+                "provider": str,
+                "skill_name": str,
+                "execution_time_ms": int,
+                "cost_estimate": float
+            },
+            "error": {...}  # If status == "error"
+        }
+    """
+    try:
+        skill_name = request.get("skill_name")
+        input_data = request.get("input_data", {})
+        context = request.get("context")
+        allow_fallback = request.get("allow_fallback", True)
+        preferred_provider = request.get("preferred_provider")
+
+        if not skill_name:
+            raise HTTPException(400, "skill_name required")
+
+        # Create skill request
+        skill_request = SkillRequest(
+            skill_name=skill_name,
+            input_data=input_data,
+            context=context,
+            allow_fallback=allow_fallback,
+            preferred_provider=SkillProvider(preferred_provider) if preferred_provider else None
+        )
+
+        # Execute via orchestrator
+        response = await skill_orchestrator.execute_skill(skill_request)
+
+        # Return response
+        return {
+            "status": response.status.value,
+            "data": response.data,
+            "metadata": response.metadata,
+            "error": response.error
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Skill execution failed: {str(e)}")
+
+
+@app.get("/api/skills/list")
+async def list_skills():
+    """List all available skills for current user (Sprint 12).
+
+    Response:
+        {
+            "skills": [
+                {
+                    "name": str,
+                    "skill_id": str,
+                    "capability": str,
+                    "description": str,
+                    "available": bool,
+                    "providers": [str],
+                    "cost_tier": str
+                }
+            ]
+        }
+    """
+    try:
+        # Get all skills from orchestrator
+        all_skills = skill_orchestrator.list_available_skills()
+
+        return {"skills": all_skills}
+
+    except Exception as e:
+        raise HTTPException(500, f"Failed to list skills: {str(e)}")
+
+
+@app.get("/api/skills/{skill_name}/info")
+async def get_skill_info(skill_name: str):
+    """Get detailed information about a specific skill (Sprint 12).
+
+    Response:
+        {
+            "name": str,
+            "skill_id": str,
+            "capability": str,
+            "description": str,
+            "available": bool,
+            "providers": [str],
+            "cost_tier": str,
+            "input_schema": dict,
+            "output_schema": dict,
+            "examples": [dict]
+        }
+    """
+    try:
+        # Get skill info from orchestrator
+        skill_info = skill_orchestrator.get_skill_info(skill_name)
+
+        if not skill_info:
+            raise HTTPException(404, f"Skill '{skill_name}' not found")
+
+        return skill_info
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Failed to get skill info: {str(e)}")
+
+
+@app.get("/api/skills/health")
+async def check_skills_health():
+    """Check health status of all skill providers (Sprint 12).
+
+    Response:
+        {
+            "providers": {
+                "claude_skill": {"available": bool, "latency_ms": int},
+                "native_python": {"available": bool, "latency_ms": int},
+                "openai": {"available": bool, "latency_ms": int},
+                "local_llm": {"available": bool, "latency_ms": int}
+            },
+            "overall_status": "healthy" | "degraded" | "unhealthy"
+        }
+    """
+    try:
+        # Check provider health
+        health_status = await skill_orchestrator.check_provider_health()
+
+        return health_status
+
+    except Exception as e:
+        raise HTTPException(500, f"Health check failed: {str(e)}")
 
 
 # Sprint 10: File Operations Endpoints
