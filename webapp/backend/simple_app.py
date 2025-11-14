@@ -966,3 +966,13 @@ if __name__ == "__main__":
     print("Press Ctrl+C to stop")
     print("=" * 70)
     uvicorn.run(app, host="127.0.0.1", port=8000)
+
+# Health Check Endpoint (for launcher script)
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for startup verification."""
+    return {
+        "status": "healthy",
+        "service": "Writers Factory Backend",
+        "version": "2.0.0"
+    }
