@@ -1,451 +1,94 @@
-# Writers Factory Core - Agent Registry
-# Configure all available LLM agents here
+# Writers Factory Agent Configuration
+# Defines all available AI models (cloud and local)
 
 agents:
-  # ============================================================================
+  # ===========================================================================
   # ANTHROPIC MODELS
-  # ============================================================================
+  # ===========================================================================
+
+  claude-sonnet-4.5:
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    description: "Best overall - balanced performance, context, and cost"
+    cost_per_1k_input: 0.003
+    cost_per_1k_output: 0.015
+    context_window: 200000
+    strengths:
+      - Long context
+      - Creative writing
+      - Character development
+    enabled: true
+    is_local: false
 
   claude-opus-4:
     provider: anthropic
     model: claude-opus-4-20250514
-    enabled: true
-    context_window: 200000
-    max_output: 16384
+    description: "Highest quality - best for final polish and complex scenes"
     cost_per_1k_input: 0.015
     cost_per_1k_output: 0.075
-    strengths:
-      - creative_narrative
-      - complex_reasoning
-      - philosophical_depth
-      - character_development
-    handler: factory.agents.anthropic.ClaudeOpus4
-    description: "Most capable Claude model for complex creative tasks"
-
-  claude-sonnet-4.5:
-    provider: anthropic
-    model: claude-sonnet-4-5-20250929
-    enabled: true
     context_window: 200000
-    max_output: 16384
-    cost_per_1k_input: 0.003
-    cost_per_1k_output: 0.015
     strengths:
-      - creative_narrative
-      - character_voice
-      - metaphor_discipline
-      - cost_effective
-    handler: factory.agents.anthropic.ClaudeSonnet45
-    description: "Best balance of quality and cost for creative writing"
+      - Highest quality
+      - Complex reasoning
+      - Voice matching
+    enabled: true
+    is_local: false
 
-  claude-sonnet-3.5:
+  claude-haiku-4:
     provider: anthropic
-    model: claude-sonnet-3-5-20241022
-    enabled: true
-    context_window: 200000
-    max_output: 8192
-    cost_per_1k_input: 0.003
-    cost_per_1k_output: 0.015
-    strengths:
-      - fast_iteration
-      - dialogue
-      - consistent_voice
-    handler: factory.agents.anthropic.ClaudeSonnet35
-    description: "Fast and reliable for general creative writing"
-
-  claude-3-opus:
-    provider: anthropic
-    model: claude-3-opus-20240229
-    enabled: true
-    context_window: 200000
-    max_output: 4096
-    cost_per_1k_input: 0.015
-    cost_per_1k_output: 0.075
-    strengths:
-      - creative_narrative
-      - complex_reasoning
-      - nuanced_character_development
-      - philosophical_depth
-    handler: factory.agents.anthropic.Claude3Opus
-    description: "Previous generation Opus - excellent creative writing"
-
-  # ============================================================================
-  # OPENAI MODELS
-  # ============================================================================
-
-  gpt-4o:
-    provider: openai
-    model: gpt-4o-2024-11-20
-    enabled: true
-    context_window: 128000
-    max_output: 16384
-    cost_per_1k_input: 0.0025
-    cost_per_1k_output: 0.01
-    strengths:
-      - dialogue
-      - polish
-      - consistency
-      - editing
-    handler: factory.agents.openai.GPT4o
-    description: "Excellent for dialogue and polished prose"
-
-  gpt-4-turbo:
-    provider: openai
-    model: gpt-4-turbo-2024-04-09
-    enabled: true
-    context_window: 128000
-    max_output: 4096
-    cost_per_1k_input: 0.01
-    cost_per_1k_output: 0.03
-    strengths:
-      - structured_output
-      - technical_accuracy
-      - world_building
-    handler: factory.agents.openai.GPT4Turbo
-    description: "Strong reasoning for complex world-building"
-
-  gpt-3.5-turbo:
-    provider: openai
-    model: gpt-3.5-turbo-0125
-    enabled: true
-    context_window: 16385
-    max_output: 4096
-    cost_per_1k_input: 0.0005
-    cost_per_1k_output: 0.0015
-    strengths:
-      - speed
-      - cost_effective
-      - quick_drafts
-      - creative_writing
-    handler: factory.agents.openai.GPT35Turbo
-    description: "Fast and cheap - surprisingly good for creative writing"
-
-  gpt-3.5-turbo-16k:
-    provider: openai
-    model: gpt-3.5-turbo-16k-0613
-    enabled: true
-    context_window: 16385
-    max_output: 4096
-    cost_per_1k_input: 0.001
-    cost_per_1k_output: 0.002
-    strengths:
-      - longer_context
-      - creative_writing
-      - narrative_flow
-      - cost_effective
-    handler: factory.agents.openai.GPT35Turbo16k
-    description: "Longer context GPT-3.5 - good creative writing quality"
-
-  # ============================================================================
-  # GOOGLE MODELS
-  # ============================================================================
-
-  gemini-2-flash:
-    provider: google
-    model: gemini-2.0-flash-exp
-    enabled: true
-    context_window: 1000000
-    max_output: 8192
-    cost_per_1k_input: 0.0
-    cost_per_1k_output: 0.0
-    strengths:
-      - long_context
-      - reasoning
-      - cost_effective
-      - world_building
-    handler: factory.agents.google.Gemini2Flash
-    description: "Free with massive context window"
-
-  gemini-1.5-pro:
-    provider: google
-    model: gemini-1.5-pro-002
-    enabled: true
-    context_window: 2000000
-    max_output: 8192
-    cost_per_1k_input: 0.00125
-    cost_per_1k_output: 0.005
-    strengths:
-      - ultra_long_context
-      - document_analysis
-      - research
-    handler: factory.agents.google.Gemini15Pro
-    description: "Best for analyzing large reference materials"
-
-  gemini-1.0-pro:
-    provider: google
-    model: gemini-1.0-pro
-    enabled: true
-    context_window: 32000
-    max_output: 2048
-    cost_per_1k_input: 0.0005
-    cost_per_1k_output: 0.0015
-    strengths:
-      - creative_writing
-      - cost_effective
-      - narrative_flow
-    handler: factory.agents.google.Gemini10Pro
-    description: "Earlier Gemini - good for creative writing experiments"
-
-  # ============================================================================
-  # XAI MODELS
-  # ============================================================================
-
-  grok:
-    provider: xai
-    model: grok-beta
-    enabled: true
-    context_window: 131072
-    max_output: 4096
-    cost_per_1k_input: 0.005
-    cost_per_1k_output: 0.015
-    strengths:
-      - creative_risk_taking
-      - unconventional_ideas
-      - humor
-    handler: factory.agents.xai.Grok
-    description: "Unconventional and creative perspectives"
-
-  # ============================================================================
-  # CHINESE LLM MODELS
-  # ============================================================================
-
-  qwen-max:
-    provider: alibaba
-    model: qwen-max
-    enabled: true
-    context_window: 32000
-    max_output: 8000
-    cost_per_1k_input: 0.008
-    cost_per_1k_output: 0.008
-    strengths:
-      - multilingual
-      - creative
-      - reasoning
-    handler: factory.agents.chinese.qwen.QwenAgent
-    description: "Qwen (通义千问) - Alibaba's flagship model"
-
-  qwen-turbo:
-    provider: alibaba
-    model: qwen-turbo
-    enabled: true
-    context_window: 8000
-    max_output: 6000
-    cost_per_1k_input: 0.002
-    cost_per_1k_output: 0.002
-    strengths:
-      - speed
-      - cost_effective
-    handler: factory.agents.chinese.qwen.QwenTurboAgent
-    description: "Faster, cheaper Qwen variant"
-
-  deepseek-v3:
-    provider: deepseek
-    model: deepseek-chat
-    enabled: true
-    context_window: 64000
-    max_output: 8000
-    cost_per_1k_input: 0.00027
-    cost_per_1k_output: 0.0011
-    strengths:
-      - cost_effective
-      - speed
-      - creative
-      - reasoning
-    handler: factory.agents.chinese.deepseek.DeepSeekAgent
-    description: "DeepSeek V3 - Extremely cost-effective"
-
-  doubao:
-    provider: bytedance
-    model: doubao-pro-32k
-    enabled: true
-    context_window: 32000
-    max_output: 4000
+    model: claude-haiku-4-20250514
+    description: "Fast and cheap - good for quick tasks and iterations"
     cost_per_1k_input: 0.0008
-    cost_per_1k_output: 0.002
+    cost_per_1k_output: 0.004
+    context_window: 200000
     strengths:
-      - cost_effective
-      - chinese_language
-      - dialogue
-    handler: factory.agents.chinese.doubao.DoubaoAgent
-    description: "Doubao (豆包) - ByteDance's model"
-
-  baichuan:
-    provider: baichuan
-    model: Baichuan4
+      - Very fast
+      - Low cost
+      - Good for drafts
     enabled: true
-    context_window: 32000
-    max_output: 4000
-    cost_per_1k_input: 0.01
-    cost_per_1k_output: 0.01
-    strengths:
-      - multilingual
-      - reasoning
-      - professional_writing
-    handler: factory.agents.chinese.baichuan.BaichuanAgent
-    description: "Baichuan (百川) - Strong reasoning model"
+    is_local: false
 
-  kimi:
-    provider: moonshot
-    model: moonshot-v1-128k
-    enabled: true
-    context_window: 128000
-    max_output: 4000
-    cost_per_1k_input: 0.012
-    cost_per_1k_output: 0.012
-    strengths:
-      - long_context
-      - research
-      - summarization
-    handler: factory.agents.chinese.kimi.KimiAgent
-    description: "Kimi (月之暗面) - Long context specialist"
+  # ===========================================================================
+  # LOCAL MODELS (OLLAMA)  
+  # ===========================================================================
 
-  chatglm:
-    provider: zhipu
-    model: glm-4
-    enabled: true
-    context_window: 128000
-    max_output: 4000
-    cost_per_1k_input: 0.005
-    cost_per_1k_output: 0.005
-    strengths:
-      - dialogue
-      - chinese_vernacular
-      - conversational
-      - character_banter
-    handler: factory.agents.chinese.chatglm.ChatGLMAgent
-    description: "ChatGLM/Zhipu AI - Strong dialogue and everyday speech"
-
-  ernie:
-    provider: baidu
-    model: ernie-4.0-8k
-    enabled: true
-    context_window: 8000
-    max_output: 2000
-    cost_per_1k_input: 0.012
-    cost_per_1k_output: 0.012
-    strengths:
-      - chinese_language
-      - knowledge_base
-      - reasoning
-      - creative_writing
-    handler: factory.agents.chinese.ernie.ErnieAgent
-    description: "Baidu ERNIE (文心一言) - Strong Chinese language model"
-
-  hunyuan:
-    provider: tencent
-    model: hunyuan-pro
-    enabled: true
-    context_window: 32000
-    max_output: 4000
-    cost_per_1k_input: 0.01
-    cost_per_1k_output: 0.01
-    strengths:
-      - multilingual
-      - creative_writing
-      - long_context
-      - reasoning
-    handler: factory.agents.chinese.hunyuan.HunyuanAgent
-    description: "Tencent Hunyuan (混元) - Versatile creative writing model"
-
-  yi:
-    provider: 01ai
-    model: yi-large
-    enabled: true
-    context_window: 32000
-    max_output: 4000
-    cost_per_1k_input: 0.003
-    cost_per_1k_output: 0.003
-    strengths:
-      - multimodal
-      - descriptive_passages
-      - mood_setting
-      - stylistic_experimentation
-    handler: factory.agents.chinese.yi.YiAgent
-    description: "01.AI Yi (零一万物) - Strong narrative and descriptive capabilities"
-
-  # ============================================================================
-  # OPEN SOURCE MODELS
-  # ============================================================================
-
-  mistral-large:
-    provider: mistral
-    model: mistral-large-latest
-    enabled: true
-    context_window: 128000
-    max_output: 4096
-    cost_per_1k_input: 0.003
-    cost_per_1k_output: 0.009
-    strengths:
-      - multilingual
-      - creative
-      - open_source
-    handler: factory.agents.opensource.mistral.MistralLarge
-    description: "Mistral's largest model"
-
-  llama-3-70b:
-    provider: meta
-    model: llama-3-70b-instruct
-    enabled: true
-    context_window: 8192
-    max_output: 2048
+  ollama-llama3:
+    provider: ollama
+    model: llama3.2:3b
+    description: "Local Llama 3.2 3B - fast and free"
     cost_per_1k_input: 0.0
     cost_per_1k_output: 0.0
+    context_window: 8192
     strengths:
-      - open_source
-      - free
-      - fast
-    handler: factory.agents.opensource.llama.Llama3_70B
-    description: "Meta's Llama 3 70B (requires local setup)"
+      - Free
+      - Fast
+      - Privacy
+      - Good for drafts
+    enabled: true
+    is_local: true
+    endpoint: http://localhost:11434
 
-# ============================================================================
-# AGENT GROUPS
-# Define preset combinations for common use cases
-# ============================================================================
+  ollama-mistral:
+    provider: ollama
+    model: mistral:7b
+    description: "Local Mistral 7B - better quality, still fast"
+    cost_per_1k_input: 0.0
+    cost_per_1k_output: 0.0
+    context_window: 32768
+    strengths:
+      - Free
+      - Good quality
+      - Creative
+      - Privacy
+    enabled: true
+    is_local: true
+    endpoint: http://localhost:11434
 
 agent_groups:
+  economy_draft:
+    - ollama-mistral
+    - ollama-llama3
+  
   premium:
     - claude-opus-4
-    - gpt-4o
-    - gemini-1.5-pro
-
-  balanced:
     - claude-sonnet-4.5
-    - gpt-4o
-    - gemini-2-flash
-    - deepseek-v3
-
-  budget:
-    - claude-sonnet-3.5
-    - gemini-2-flash
-    - deepseek-v3
-    - doubao
-
-  chinese:
-    - qwen-max
-    - deepseek-v3
-    - doubao
-    - baichuan
-    - kimi
-
-  creative:
-    - claude-sonnet-4.5
-    - grok
-    - qwen-max
-
-  dialogue:
-    - gpt-4o
-    - claude-sonnet-3.5
-    - doubao
-
-# ============================================================================
-# GLOBAL SETTINGS
-# ============================================================================
-
-settings:
-  default_temperature: 0.8
-  default_max_tokens: 2000
-  default_timeout: 120
-  retry_attempts: 3
-  retry_delay: 2.0
-  enable_caching: true
-  log_all_requests: true
