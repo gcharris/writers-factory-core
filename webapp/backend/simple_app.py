@@ -475,6 +475,72 @@ async def session_save():
     return {"success": True}
 
 
+# Creation Wizard Endpoints
+@app.post("/api/wizard/complete")
+async def wizard_complete(request: dict):
+    """Complete the creation wizard and generate initial manuscript structure.
+
+    Args:
+        request: Dictionary containing wizard form data with keys:
+            - title, genre, premise, themes (foundation)
+            - protagonist, antagonist, supportingCast (characters)
+            - setting, worldRules, atmosphere (world)
+            - actStructure, targetLength, pacing (structure)
+
+    Returns:
+        Success status and project metadata
+    """
+    try:
+        # Extract wizard data
+        title = request.get('title', 'Untitled Story')
+        genre = request.get('genre', 'fiction')
+
+        # TODO: Generate initial manuscript structure based on wizard inputs
+        # For now, return success with project metadata
+
+        return {
+            "success": True,
+            "project": {
+                "title": title,
+                "genre": genre,
+                "created_at": "2025-11-14",
+                "manuscript_id": "demo-manuscript"
+            },
+            "message": "Project created successfully! Starting manuscript generation..."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/manuscript/import")
+async def manuscript_import(file: dict):
+    """Import an existing manuscript file.
+
+    Args:
+        file: File upload data (placeholder for now)
+
+    Returns:
+        Success status and imported manuscript metadata
+    """
+    try:
+        # TODO: Implement actual file import logic
+        # Parse uploaded file (txt, md, docx)
+        # Create manuscript structure
+        # Extract scenes and chapters
+
+        return {
+            "success": True,
+            "manuscript": {
+                "title": "Imported Manuscript",
+                "scenes_count": 0,
+                "word_count": 0
+            },
+            "message": "Import functionality coming soon!"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Ollama Management Endpoints
 @app.get("/api/ollama/status")
 async def ollama_status():

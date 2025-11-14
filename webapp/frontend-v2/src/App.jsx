@@ -11,11 +11,13 @@ import { SetupWizard } from './features/setup/SetupWizard';
 import { OllamaStatus } from './features/ollama/OllamaStatus';
 import { CostDashboard } from './features/cost/CostDashboard';
 import { AgentProfiles } from './features/profiles/AgentProfiles';
+import { BrainstormPage } from './features/brainstorm/BrainstormPage';
 
 const queryClient = new QueryClient();
 
 function App() {
   const [showSetup, setShowSetup] = useState(false);
+  const [hasManuscript, setHasManuscript] = useState(null); // null = loading, true/false = determined
   const [selectedScene, setSelectedScene] = useState(null);
   const [rightPanel, setRightPanel] = useState('tools'); // 'tools' | 'knowledge' | 'tournament'
   const [models, setModels] = useState([]);
@@ -33,6 +35,18 @@ function App() {
       setShowSetup(true);
     }
 
+    // Check if manuscript exists
+    fetch('http://localhost:8000/api/manuscript/tree')
+      .then(res => res.json())
+      .then(data => {
+        // If we have acts/chapters/scenes, we have a manuscript
+        setHasManuscript(data.acts && data.acts.length > 0);
+      })
+      .catch(err => {
+        console.error('Failed to check manuscript:', err);
+        setHasManuscript(false); // Default to no manuscript on error
+      });
+
     // Load models
     fetch('http://localhost:8000/api/models/available')
       .then(res => res.json())
@@ -46,6 +60,13 @@ function App() {
     localStorage.setItem('economy_mode', newMode.toString());
   };
 
+  const handleProjectCreated = (projectData) => {
+    // Project created successfully, show the editor
+    setHasManuscript(true);
+    // Optionally reload manuscript tree
+    queryClient.invalidateQueries(['manuscript-tree']);
+  };
+
   if (showSetup) {
     return (
       <QueryClientProvider client={queryClient}>
@@ -55,6 +76,32 @@ function App() {
     );
   }
 
+  // Show loading state while checking for manuscript
+  if (hasManuscript === null) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="h-screen flex items-center justify-center bg-gray-900 text-gray-100">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading Writers Factory...</p>
+          </div>
+        </div>
+        <Toaster position="top-right" theme="dark" />
+      </QueryClientProvider>
+    );
+  }
+
+  // Show Brainstorm page if no manuscript
+  if (!hasManuscript) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <BrainstormPage onProjectCreated={handleProjectCreated} />
+        <Toaster position="top-right" theme="dark" />
+      </QueryClientProvider>
+    );
+  }
+
+  // Show main editor if manuscript exists
   return (
     <QueryClientProvider client={queryClient}>
       <div className="h-screen flex flex-col bg-gray-900 text-gray-100">
