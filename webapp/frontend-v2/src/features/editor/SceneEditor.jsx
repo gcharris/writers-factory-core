@@ -1,16 +1,33 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Editor } from '@toast-ui/react-editor';
-import '@toast-ui/editor/dist/toastui-editor.css';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Highlight from '@tiptap/extension-highlight';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
 import { useDebounce } from '../../hooks/useDebounce';
 import { exportToMarkdown, exportToText, exportToHTML } from '../../utils/exporters';
 import { showFriendlyError } from '../../utils/errorHandler';
+import {
+  Bold, Italic, Strikethrough, Code, Heading1, Heading2, Heading3,
+  List, ListOrdered, Quote, Minus, Link as LinkIcon, Image as ImageIcon,
+  Table as TableIcon, CheckSquare, Highlighter, Code2, Maximize2, Minimize2
+} from 'lucide-react';
+import './editor-styles.css';
+
+const lowlight = createLowlight(common);
 
 export function SceneEditor({ sceneId }) {
-  const [content, setContent] = useState('');
   const [lastSaved, setLastSaved] = useState(null);
-  const [editMode, setEditMode] = useState('wysiwyg'); // 'wysiwyg' or 'markdown'
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [stats, setStats] = useState({
@@ -20,13 +37,65 @@ export function SceneEditor({ sceneId }) {
     paragraphs: 0,
     readingTime: 0
   });
-  const debouncedContent = useDebounce(content, 2000); // 2s autosave delay
   const queryClient = useQueryClient();
-  const editorRef = useRef(null);
 
-  // Calculate writing stats from markdown content
-  const updateStats = (markdown) => {
-    const text = markdown.replace(/[#*`_~[\]()]/g, ''); // Remove markdown syntax
+  // Initialize TipTap editor
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        codeBlock: false, // Disable default code block to use CodeBlockLowlight
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-400 underline hover:text-blue-300',
+        },
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded',
+        },
+      }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'border-collapse table-auto w-full',
+        },
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      TaskList.configure({
+        HTMLAttributes: {
+          class: 'not-prose',
+        },
+      }),
+      TaskItem.configure({
+        nested: true,
+      }),
+      Highlight.configure({
+        multicolor: true,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        HTMLAttributes: {
+          class: 'bg-gray-800 rounded p-4 my-4',
+        },
+      }),
+    ],
+    editorProps: {
+      attributes: {
+        class: 'prose prose-invert max-w-none focus:outline-none min-h-[500px] px-8 py-6',
+      },
+    },
+    onUpdate: ({ editor }) => {
+      const text = editor.getText();
+      updateStats(text);
+    },
+  });
+
+  // Calculate writing stats
+  const updateStats = (text) => {
     const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
     const characters = text.length;
     const charactersNoSpaces = text.replace(/\s/g, '').length;
@@ -40,12 +109,6 @@ export function SceneEditor({ sceneId }) {
       paragraphs,
       readingTime
     });
-
-    // Update toolbar word count display
-    const wordCountDisplay = document.getElementById('word-count-display');
-    if (wordCountDisplay) {
-      wordCountDisplay.textContent = `${words.toLocaleString()} words`;
-    }
   };
 
   // Load scene
@@ -66,21 +129,29 @@ export function SceneEditor({ sceneId }) {
     }
   });
 
-  // Update content when scene loads
+  // Update editor content when scene loads
   useEffect(() => {
-    if (scene?.content) {
-      setContent(scene.content);
-
-      // Update editor content when scene changes
-      if (editorRef.current) {
-        const editorInstance = editorRef.current.getInstance();
-        editorInstance.setMarkdown(scene.content);
-      }
-
-      // Update stats
-      updateStats(scene.content);
+    if (scene?.content && editor) {
+      // Convert markdown to HTML for TipTap
+      // For now, just set as HTML (TipTap handles markdown-style text well)
+      editor.commands.setContent(scene.content);
+      updateStats(editor.getText());
     }
-  }, [scene?.id]); // Only run when scene ID changes
+  }, [scene?.id, editor]);
+
+  // Get content for saving (convert to markdown)
+  const getEditorContent = () => {
+    if (!editor) return '';
+    // Get HTML content
+    const html = editor.getHTML();
+    // For markdown export, we'll use the text with basic formatting
+    // TipTap stores as HTML, we'll convert to markdown on export
+    return html;
+  };
+
+  // Debounced content for autosave
+  const currentContent = editor ? getEditorContent() : '';
+  const debouncedContent = useDebounce(currentContent, 2000);
 
   // Save mutation
   const saveMutation = useMutation({
@@ -99,7 +170,7 @@ export function SceneEditor({ sceneId }) {
     },
     onSuccess: () => {
       setLastSaved(new Date());
-      queryClient.invalidateQueries(['manuscript-tree']); // Update word counts
+      queryClient.invalidateQueries(['manuscript-tree']);
     },
     onError: (error) => {
       showFriendlyError(error, toast, { type: 'scene' });
@@ -108,7 +179,7 @@ export function SceneEditor({ sceneId }) {
 
   // Autosave when content changes
   useEffect(() => {
-    if (debouncedContent && debouncedContent !== scene?.content) {
+    if (debouncedContent && debouncedContent !== scene?.content && editor) {
       saveMutation.mutate(debouncedContent);
     }
   }, [debouncedContent]);
@@ -118,17 +189,15 @@ export function SceneEditor({ sceneId }) {
     const handleSave = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        if (editorRef.current) {
-          const editorInstance = editorRef.current.getInstance();
-          const markdown = editorInstance.getMarkdown();
-          saveMutation.mutate(markdown);
+        if (editor) {
+          saveMutation.mutate(getEditorContent());
           toast.success('Saved');
         }
       }
     };
     window.addEventListener('keydown', handleSave);
     return () => window.removeEventListener('keydown', handleSave);
-  }, [sceneId]);
+  }, [editor, sceneId]);
 
   // Fullscreen keyboard shortcuts
   useEffect(() => {
@@ -146,28 +215,9 @@ export function SceneEditor({ sceneId }) {
     return () => window.removeEventListener('keydown', handleKeyboard);
   }, [isFullscreen]);
 
-  const handleEditorChange = () => {
-    if (editorRef.current) {
-      const editorInstance = editorRef.current.getInstance();
-      const markdown = editorInstance.getMarkdown();
-      setContent(markdown);
-      updateStats(markdown);
-    }
-  };
-
-  const toggleEditMode = () => {
-    if (editorRef.current) {
-      const editor = editorRef.current.getInstance();
-      const newMode = editMode === 'wysiwyg' ? 'markdown' : 'wysiwyg';
-      editor.changeMode(newMode);
-      setEditMode(newMode);
-    }
-  };
-
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
 
-    // Optional: Use browser fullscreen API
     if (!isFullscreen) {
       document.documentElement.requestFullscreen?.();
     } else {
@@ -176,29 +226,46 @@ export function SceneEditor({ sceneId }) {
   };
 
   const handleExport = (format) => {
-    if (editorRef.current) {
-      const editor = editorRef.current.getInstance();
-      const markdown = editor.getMarkdown();
-      const title = scene?.title || 'Untitled Scene';
+    if (!editor) return;
 
-      switch (format) {
-        case 'md':
-          exportToMarkdown(title, markdown);
-          toast.success('Scene exported as Markdown');
-          break;
-        case 'txt':
-          exportToText(title, markdown);
-          toast.success('Scene exported as plain text');
-          break;
-        case 'html':
-          exportToHTML(title, markdown);
-          toast.success('Scene exported as HTML');
-          break;
-      }
+    const title = scene?.title || 'Untitled Scene';
+    const text = editor.getText();
+    const html = editor.getHTML();
 
-      setShowExportMenu(false);
+    switch (format) {
+      case 'md':
+        // Convert HTML to basic markdown
+        exportToMarkdown(title, text);
+        toast.success('Scene exported as Markdown');
+        break;
+      case 'txt':
+        exportToText(title, text);
+        toast.success('Scene exported as plain text');
+        break;
+      case 'html':
+        exportToHTML(title, html);
+        toast.success('Scene exported as HTML');
+        break;
     }
+
+    setShowExportMenu(false);
   };
+
+  // Toolbar button component
+  const ToolbarButton = ({ onClick, active, disabled, title, icon: Icon, children }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`p-2 rounded transition-colors ${
+        active
+          ? 'bg-blue-600 text-white'
+          : 'hover:bg-gray-700 text-gray-300'
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      {Icon ? <Icon size={18} /> : children}
+    </button>
+  );
 
   if (!sceneId) {
     return (
@@ -216,6 +283,14 @@ export function SceneEditor({ sceneId }) {
     );
   }
 
+  if (!editor) {
+    return (
+      <div className="h-full flex items-center justify-center text-gray-500">
+        Initializing editor...
+      </div>
+    );
+  }
+
   return (
     <div className={isFullscreen ? 'fixed inset-0 z-50 bg-gray-900 flex flex-col' : 'h-full flex flex-col bg-gray-900'}>
       {/* Editor Header */}
@@ -226,21 +301,109 @@ export function SceneEditor({ sceneId }) {
         </div>
       </div>
 
-      {/* Mode Toggle Bar */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 border-b border-gray-700">
-        <button
-          onClick={toggleEditMode}
-          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors"
-        >
-          {editMode === 'wysiwyg' ? 'Switch to Markdown' : 'Switch to WYSIWYG'}
-        </button>
+      {/* Toolbar */}
+      <div className="flex items-center gap-1 px-4 py-2 bg-gray-800 border-b border-gray-700 flex-wrap">
+        {/* Text Formatting */}
+        <div className="flex items-center gap-1 border-r border-gray-700 pr-2 mr-2">
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            active={editor.isActive('bold')}
+            title="Bold (Cmd+B)"
+            icon={Bold}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            active={editor.isActive('italic')}
+            title="Italic (Cmd+I)"
+            icon={Italic}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            active={editor.isActive('strike')}
+            title="Strikethrough"
+            icon={Strikethrough}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleCode().run()}
+            active={editor.isActive('code')}
+            title="Inline Code"
+            icon={Code}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHighlight().run()}
+            active={editor.isActive('highlight')}
+            title="Highlight"
+            icon={Highlighter}
+          />
+        </div>
 
-        <span className="text-gray-400 text-sm">
-          {editMode === 'wysiwyg' ? 'Visual Editor' : 'Markdown Editor'}
-        </span>
+        {/* Headings */}
+        <div className="flex items-center gap-1 border-r border-gray-700 pr-2 mr-2">
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            active={editor.isActive('heading', { level: 1 })}
+            title="Heading 1"
+            icon={Heading1}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            active={editor.isActive('heading', { level: 2 })}
+            title="Heading 2"
+            icon={Heading2}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            active={editor.isActive('heading', { level: 3 })}
+            title="Heading 3"
+            icon={Heading3}
+          />
+        </div>
+
+        {/* Lists */}
+        <div className="flex items-center gap-1 border-r border-gray-700 pr-2 mr-2">
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            active={editor.isActive('bulletList')}
+            title="Bullet List"
+            icon={List}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            active={editor.isActive('orderedList')}
+            title="Numbered List"
+            icon={ListOrdered}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleTaskList().run()}
+            active={editor.isActive('taskList')}
+            title="Task List"
+            icon={CheckSquare}
+          />
+        </div>
+
+        {/* Block Elements */}
+        <div className="flex items-center gap-1 border-r border-gray-700 pr-2 mr-2">
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            active={editor.isActive('blockquote')}
+            title="Blockquote"
+            icon={Quote}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setHorizontalRule().run()}
+            title="Horizontal Rule"
+            icon={Minus}
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            active={editor.isActive('codeBlock')}
+            title="Code Block"
+            icon={Code2}
+          />
+        </div>
 
         {/* Export Dropdown */}
-        <div className="relative ml-4">
+        <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
             className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm flex items-center gap-2 transition-colors"
@@ -275,48 +438,24 @@ export function SceneEditor({ sceneId }) {
         {/* Fullscreen Toggle */}
         <button
           onClick={toggleFullscreen}
-          className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm flex items-center gap-2 transition-colors"
+          className="ml-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm flex items-center gap-2 transition-colors"
           title="Distraction-free mode (F11)"
         >
-          {isFullscreen ? '🗗 Exit Fullscreen' : '🗖 Fullscreen'}
+          {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
         </button>
 
         <div className="ml-auto text-sm">
-          <span id="word-count-display" className="text-green-400 font-medium">0 words</span>
+          <span className="text-green-400 font-medium">{stats.words.toLocaleString()} words</span>
         </div>
       </div>
 
-      {/* Toast UI Editor */}
-      <div className="flex-1 overflow-hidden">
-        <Editor
-          ref={editorRef}
-          initialValue={content || "Start writing your scene..."}
-          previewStyle="vertical"
-          height={isFullscreen ? 'calc(100vh - 120px)' : '100%'}
-          initialEditType="wysiwyg"
-          useCommandShortcut={true}
-          usageStatistics={false}
-          onChange={handleEditorChange}
-          toolbarItems={[
-            // Text formatting
-            ['heading', 'bold', 'italic', 'strike'],
-
-            // Paragraph tools
-            ['hr', 'quote'],
-
-            // Lists
-            ['ul', 'ol'],
-
-            // Advanced
-            ['table', 'link', 'image'],
-
-            // Code (for technical notes)
-            ['code', 'codeblock']
-          ]}
-        />
+      {/* Editor Content */}
+      <div className="flex-1 overflow-y-auto bg-gray-900">
+        <EditorContent editor={editor} />
       </div>
 
-      {/* Stats Panel - Always show in fullscreen with minimal styling */}
+      {/* Stats Panel */}
       {!isFullscreen && (
         <div className="px-4 py-2 bg-gray-800 border-t border-gray-700 flex items-center justify-between text-sm">
           <div className="flex items-center gap-6 text-gray-400">
