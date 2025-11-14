@@ -213,3 +213,32 @@ mypy factory/
 By contributing, you agree that your contributions will be licensed under the MIT License.
 
 Thank you for contributing to Writers Factory Core!
+
+---
+
+## Contributor License Agreement (CLA)
+
+By submitting a pull request or contribution to Writers Factory, you agree to the following:
+
+### What You Keep:
+- ✅ **You retain ownership** of your contribution
+- ✅ **You retain copyright** to your code
+- ✅ **Your name** appears in CONTRIBUTORS.md
+
+### What You Grant:
+- ✅ **Perpetual, irrevocable license** for the project to use your contribution
+- ✅ **Permission** to modify, distribute, and sublicense your contribution
+- ✅ **Patent grant** (if applicable) under Apache 2.0 terms
+
+### What You Confirm:
+- ✅ **Your contribution is your own original work**
+- ✅ **You have the right** to submit it under Apache 2.0
+- ✅ **You're not violating** any employer agreements or third-party rights
+
+**Why we need this**: This CLA allows the project maintainer to commercialize Writers Factory (e.g., offer hosted versions, consulting, or premium features) while keeping the core open-source. Contributors are fairly recognized and retain ownership of their work.
+
+**Questions about the CLA?** Open an issue or contact the maintainer.
+
+---
+
+**Note on Licensing**: The project license was updated to Apache 2.0 (from MIT) to provide better patent protection and clearer commercial use terms. All previous contributions remain under their original MIT license terms.
