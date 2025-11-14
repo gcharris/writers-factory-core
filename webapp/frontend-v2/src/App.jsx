@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { useState, useEffect } from 'react';
 import { FileTree } from './features/explorer/FileTree';
@@ -13,6 +13,9 @@ import { CostDashboard } from './features/cost/CostDashboard';
 import { AgentProfiles } from './features/profiles/AgentProfiles';
 import { BrainstormPage } from './features/brainstorm/BrainstormPage';
 import { CharacterPanel } from './features/character/CharacterPanel';
+import { WelcomeModal } from './features/onboarding/WelcomeModal';
+import { HelpPanel } from './features/help/HelpPanel';
+import { Book } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
@@ -28,6 +31,11 @@ function App() {
   });
   const [showCostDashboard, setShowCostDashboard] = useState(false);
   const [showAgentProfiles, setShowAgentProfiles] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(() => {
+    // Check if user has seen welcome (localStorage)
+    return !localStorage.getItem('writers-factory-onboarded');
+  });
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     // Check if setup needed
@@ -66,6 +74,32 @@ function App() {
     setHasManuscript(true);
     // Optionally reload manuscript tree
     queryClient.invalidateQueries(['manuscript-tree']);
+  };
+
+  const handleWelcomeComplete = (choice) => {
+    localStorage.setItem('writers-factory-onboarded', 'true');
+
+    // Handle user choice
+    switch (choice) {
+      case 'wizard':
+        // Navigate to brainstorm page (creation wizard)
+        toast.success('Opening Creation Wizard...');
+        setHasManuscript(false);
+        break;
+      case 'import':
+        // Trigger import flow
+        toast.info('Import feature coming soon!');
+        break;
+      case 'example':
+        // Load example project
+        toast.success('Loading example project...');
+        // TODO: Implement loadExampleProject()
+        break;
+      case 'skip':
+        // Do nothing, let user explore
+        toast.info('Welcome! Feel free to explore.');
+        break;
+    }
   };
 
   if (showSetup) {
@@ -174,6 +208,16 @@ function App() {
             >
               ⚙️ Profiles
             </button>
+
+            {/* Help Button */}
+            <button
+              onClick={() => setShowHelp(true)}
+              className="px-3 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600 flex items-center gap-2"
+              title="Help & Documentation"
+            >
+              <Book size={16} />
+              Help
+            </button>
           </div>
         </div>
 
@@ -213,6 +257,17 @@ function App() {
 
       {/* Agent Profiles Modal */}
       {showAgentProfiles && <AgentProfiles models={models} onClose={() => setShowAgentProfiles(false)} />}
+
+      {/* Welcome Modal */}
+      {showWelcome && (
+        <WelcomeModal
+          onClose={() => setShowWelcome(false)}
+          onComplete={handleWelcomeComplete}
+        />
+      )}
+
+      {/* Help Panel */}
+      {showHelp && <HelpPanel onClose={() => setShowHelp(false)} />}
 
       <Toaster position="top-right" theme="dark" />
     </QueryClientProvider>
