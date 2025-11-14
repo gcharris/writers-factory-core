@@ -545,6 +545,43 @@ async def manuscript_import(file: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/example/load")
+async def load_example_project():
+    """Load the example project (The Explants excerpt)."""
+    try:
+        import json
+
+        # Load example data
+        example_path = Path(__file__).parent / "example_project.json"
+        with open(example_path, 'r') as f:
+            example_data = json.load(f)
+
+        # Convert to Manuscript object
+        manuscript = Manuscript.from_dict(example_data)
+
+        # Save to storage
+        manuscript_path = project_path / ".manuscript" / "explants-v1"
+        storage = ManuscriptStorage(manuscript_path)
+        storage.save(manuscript)
+
+        # Cache as current manuscript
+        _manuscript_cache['current'] = manuscript
+
+        return {
+            "success": True,
+            "message": "Example project loaded successfully",
+            "manuscript": {
+                "title": manuscript.title,
+                "acts": len(manuscript.acts),
+                "chapters": sum(len(act.chapters) for act in manuscript.acts),
+                "scenes": sum(len(chapter.scenes) for act in manuscript.acts for chapter in act.chapters),
+                "word_count": manuscript.total_word_count
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Ollama Management Endpoints
 @app.get("/api/ollama/status")
 async def ollama_status():

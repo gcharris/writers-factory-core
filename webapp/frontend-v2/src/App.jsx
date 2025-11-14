@@ -76,6 +76,33 @@ function App() {
     queryClient.invalidateQueries(['manuscript-tree']);
   };
 
+  const loadExampleProject = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/example/load', {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Example project loaded! Opening editor...');
+        setHasManuscript(true);
+        setShowWelcome(false);
+        // Refresh manuscript tree
+        queryClient.invalidateQueries(['manuscript-tree']);
+      } else {
+        throw new Error(data.error || 'Failed to load example project');
+      }
+    } catch (error) {
+      console.error('Failed to load example project:', error);
+      toast.error('Failed to load example project. Make sure the backend is running.');
+    }
+  };
+
   const handleWelcomeComplete = (choice) => {
     localStorage.setItem('writers-factory-onboarded', 'true');
 
@@ -92,8 +119,7 @@ function App() {
         break;
       case 'example':
         // Load example project
-        toast.success('Loading example project...');
-        // TODO: Implement loadExampleProject()
+        loadExampleProject();
         break;
       case 'skip':
         // Do nothing, let user explore
