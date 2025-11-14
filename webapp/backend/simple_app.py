@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from factory.core.config.loader import load_agent_config, get_enabled_agents
 from webapp.backend.agent_integration import get_bridge
+from factory.core.manuscript import Manuscript, ManuscriptStorage
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -35,6 +36,9 @@ app.add_middleware(
 # Global state
 project_path = Path.cwd() / "project"
 project_path.mkdir(parents=True, exist_ok=True)
+
+# Manuscript cache
+_manuscript_cache = {}
 
 
 # Request/Response Models
@@ -97,6 +101,137 @@ async def wizard_progress():
     return {
         "active": False
     }
+
+
+# Manuscript Endpoints
+@app.get("/api/manuscript/tree")
+async def get_manuscript_tree():
+    """Get hierarchical manuscript structure."""
+    try:
+        manuscript_path = project_path / ".manuscript" / "explants-v1"
+
+        # Check if manuscript exists
+        if not manuscript_path.exists():
+            return {"acts": []}
+
+        # Load manuscript
+        storage = ManuscriptStorage(manuscript_path)
+        manuscript = storage.load()
+
+        if not manuscript:
+            return {"acts": []}
+
+        # Cache it
+        _manuscript_cache['current'] = manuscript
+
+        # Return tree structure
+        return {
+            "title": manuscript.title,
+            "acts": [
+                {
+                    "id": act.id,
+                    "title": act.title,
+                    "chapters": [
+                        {
+                            "id": chapter.id,
+                            "title": chapter.title,
+                            "scenes": [
+                                {
+                                    "id": scene.id,
+                                    "title": scene.title,
+                                    "word_count": scene.word_count
+                                }
+                                for scene in chapter.scenes
+                            ]
+                        }
+                        for chapter in act.chapters
+                    ]
+                }
+                for act in manuscript.acts
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load manuscript: {str(e)}")
+
+
+@app.get("/api/scene/{scene_id}")
+async def get_scene(scene_id: str):
+    """Get specific scene content."""
+    try:
+        manuscript = _manuscript_cache.get('current')
+
+        if not manuscript:
+            manuscript_path = project_path / ".manuscript" / "explants-v1"
+            storage = ManuscriptStorage(manuscript_path)
+            manuscript = storage.load()
+            _manuscript_cache['current'] = manuscript
+
+        if not manuscript:
+            raise HTTPException(status_code=404, detail="No manuscript loaded")
+
+        # Find scene by ID
+        for act in manuscript.acts:
+            for chapter in act.chapters:
+                for scene in chapter.scenes:
+                    if scene.id == scene_id:
+                        return {
+                            "id": scene.id,
+                            "title": scene.title,
+                            "content": scene.content,
+                            "word_count": scene.word_count,
+                            "notes": scene.notes,
+                            "metadata": scene.metadata
+                        }
+
+        raise HTTPException(status_code=404, detail="Scene not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/scene/{scene_id}")
+async def update_scene(scene_id: str, request: dict):
+    """Update scene content (for autosave)."""
+    try:
+        content = request.get("content", "")
+
+        manuscript = _manuscript_cache.get('current')
+        if not manuscript:
+            manuscript_path = project_path / ".manuscript" / "explants-v1"
+            storage = ManuscriptStorage(manuscript_path)
+            manuscript = storage.load()
+            _manuscript_cache['current'] = manuscript
+
+        if not manuscript:
+            raise HTTPException(status_code=404, detail="No manuscript loaded")
+
+        # Find and update scene
+        for act in manuscript.acts:
+            for chapter in act.chapters:
+                for scene in chapter.scenes:
+                    if scene.id == scene_id:
+                        scene.update_content(content)
+
+                        # Save manuscript
+                        manuscript_path = project_path / ".manuscript" / "explants-v1"
+                        storage = ManuscriptStorage(manuscript_path)
+                        success = storage.save(manuscript)
+
+                        if success:
+                            return {
+                                "success": True,
+                                "word_count": scene.word_count,
+                                "saved_at": "now"
+                            }
+                        else:
+                            raise HTTPException(status_code=500, detail="Failed to save")
+
+        raise HTTPException(status_code=404, detail="Scene not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Model Comparison Endpoints
