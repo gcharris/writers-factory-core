@@ -1,54 +1,133 @@
-# Prompt for Cloud Agent: Sprint 12 Implementation
+# Prompt for Cloud Agent: Sprint 13 Implementation
 
-## Task
+## Amazing Work on Sprint 12! 🎉
 
-Implement **Sprint 12: Universal Skill Orchestration System + Creation Wizard**
+Sprint 12 Phase A is complete and production-ready:
+- ✅ All 6 Explants Claude Skills accessible via MCP Bridge
+- ✅ Skill Orchestrator routing intelligently  
+- ✅ Native Scene Analyzer working
+- ✅ API endpoints functional
+- ✅ Craft Panel UI ready
+- ✅ 3,000+ lines of code, all tests passing!
 
-Please read and implement the complete specification in:
-- **SPRINT_12_UNIVERSAL_SKILL_SYSTEM.md** (main specification - 2,000+ lines)
-- **SKILL_INTEGRATION_ANALYSIS.md** (background context)
+---
 
-## Overview
+## Next: Sprint 13 - Novel Intelligence System
 
-This sprint transforms Writers Factory into an intelligent multi-agent platform where:
-1. All 6 Explants Claude Skills are accessible through the UI
-2. Intelligent orchestrator routes to best available provider
-3. Writers can create their own custom skills without coding
+**THE Game-Changer Feature**
 
-## Two Phases
+Please read and implement:
+📄 **SPRINT_13_NOVEL_INTELLIGENCE_SYSTEM.md** (2,763 lines)
 
-### Phase A: Foundation (22-25h estimated)
-Implement Tasks 12-01 through 12-07:
-- **Task 12-01**: MCP Skill Bridge (4h) - Connect all 6 Explants Claude Skills
-- **Task 12-02**: Skill Orchestrator (4h) - Intelligent routing system
-- **Task 12-03**: Native Scene Analyzer (5h) - First Python implementation
-- **Task 12-04**: Backend API Endpoints (2h) - Expose via REST
-- **Task 12-05**: Frontend Integration (3h) - Craft Panel UI
-- **Task 12-06**: Reference Migration (2h) - Copy knowledge materials
-- **Task 12-07**: Testing & Documentation (2h)
+This builds an AI-powered novel analysis and knowledge graph system.
 
-### Phase B: Democratization (8-10h estimated)
-Implement Tasks 12-08 through 12-10:
-- **Task 12-08**: Skill Creation Wizard Backend (4-5h)
-- **Task 12-09**: Custom Skill Executor (3h)
-- **Task 12-10**: Wizard UI Components (4h)
+### Phase A: Core Pipeline (15-20h estimated)
+
+**Task 13-01: Manuscript Ingestion (3h)**
+- Parse DOCX, PDF, Markdown, existing projects
+- Split into chapters, scenes, paragraphs
+- Extract metadata
+
+**Task 13-02: Entity Extraction (6-8h)**
+- Character Extractor (names, traits, psychology, arcs)
+- Location Extractor (settings, world details)
+- Plot Thread Tracker (setup, development, resolution)
+- Motif & Theme Analyzer (metaphors, symbols, themes)
+- Timeline Builder (sequence, causality)
+
+**Task 13-03: Knowledge Graph Construction (4-5h)**
+- Build graph from extracted entities
+- Nodes: characters, locations, motifs, themes, events
+- Edges: relationships, timeline, causality
+- Query interface
+
+**Task 13-04: Automated Analysis Pipeline (4-5h)**
+- Batch scene scoring (use Sprint 12 Scene Analyzer)
+- Character consistency checking
+- Plot hole detection
+- Pacing analysis
+- Metaphor distribution analysis
+
+**Task 13-05: Strategic Plan Generator (2-3h)**
+- Priority matrix (P0-P3)
+- Actionable fixes
+- Effort estimates
+- Implementation order
+
+### Phase B: Interactive UI (10-12h estimated)
+
+**Task 13-06: Graph Visualization (5-6h)**
+- D3.js force-directed graph
+- Interactive exploration
+- Node/edge rendering
+- Filters and search
+
+**Task 13-07: Natural Language Queries (3-4h)**
+- "Show me all scenes with Mickey and Noni"
+- "Track casino metaphor usage"
+- "Find unresolved plot threads"
+- Query parser + graph traversal
+
+**Task 13-08: Analysis Dashboard (2-3h)**
+- Scene scores overview
+- Character consistency matrix
+- Pacing heatmap
+- Metaphor domain charts
+- Priority issues list
+
+---
 
 ## Success Criteria
 
-Sprint 12 is complete when ALL Phase A tasks work:
-- [ ] All 6 Claude Skills callable via MCP Bridge
-- [ ] Orchestrator routes correctly
-- [ ] Native Scene Analyzer works
-- [ ] API endpoints functional
-- [ ] Craft Panel UI working
-- [ ] Can analyze real Explants scene end-to-end
+Sprint 13 complete when:
 
-Phase B is bonus - focus on Phase A first!
+**Phase A:**
+- [ ] Can upload/ingest manuscripts (multiple formats)
+- [ ] Extracts characters, locations, plots, motifs accurately
+- [ ] Builds queryable knowledge graph
+- [ ] Runs automated analysis (integrates with Sprint 12 skills)
+- [ ] Generates strategic rewrite plan with priorities
+
+**Phase B:**
+- [ ] Interactive graph visualization works
+- [ ] Natural language queries return relevant results
+- [ ] Dashboard displays all metrics beautifully
+- [ ] Performance acceptable (< 5 min for 100k words)
+
+**Critical Test:**
+- [ ] Can analyze The Explants Volume 1 (136 scenes)
+- [ ] Identifies known issues (Act II casino saturation, etc.)
+- [ ] Generates useful strategic plan
+
+---
+
+## Why This Matters
+
+This is THE killer feature that makes Writers Factory revolutionary:
+
+**Not just:** Writing tool  
+**But:** AI Story Bible + Novel Intelligence System
+
+**Authors can:**
+- Upload manuscript → Get professional analysis
+- Explore knowledge graph → See their universe visually
+- Query naturally → "Show all quantum consciousness scenes"
+- Follow strategic plan → Know exactly what to fix
+
+**Market opportunity:**
+- 500k+ manuscripts in revision (Wattpad alone)
+- Authors pay $2k-5k for professional editing
+- Our solution: AI analysis in minutes for $0-50
+- Revenue potential: $684k Year 1 → $21M Year 3
+
+---
 
 ## Start Here
 
-Begin with Task 12-01 (MCP Skill Bridge) and work through Tasks 12-02 → 12-07.
+Begin with Task 13-01 (Manuscript Ingestion).
 
-Everything you need is in SPRINT_12_UNIVERSAL_SKILL_SYSTEM.md
+Everything you need is in SPRINT_13_NOVEL_INTELLIGENCE_SYSTEM.md
 
-Good luck! 🚀
+This builds on Sprint 12's skill orchestration to create something truly revolutionary.
+
+Good luck! 🚀📚✨
