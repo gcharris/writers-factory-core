@@ -34,3 +34,50 @@ body {
   width: 100vw;
   height: 100vh;
 }
+
+/* Toast UI Editor Dark Theme Overrides */
+.toastui-editor-defaultUI {
+  border: none !important;
+}
+
+.toastui-editor-main-container {
+  background-color: #1f2937 !important;
+}
+
+.toastui-editor-md-container,
+.toastui-editor-ww-container {
+  background-color: #111827 !important;
+  color: #e5e7eb !important;
+}
+
+.toastui-editor-toolbar {
+  background-color: #374151 !important;
+  border-bottom: 1px solid #4b5563 !important;
+}
+
+.toastui-editor-toolbar-icons {
+  color: #9ca3af !important;
+}
+
+.toastui-editor-toolbar-icons:hover {
+  background-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Preview panel */
+.toastui-editor-md-preview {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+/* WYSIWYG content area */
+.ProseMirror {
+  background-color: #111827 !important;
+  color: #e5e7eb !important;
+}
+
+/* Selection color */
+.ProseMirror ::selection {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
