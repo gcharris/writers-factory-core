@@ -113,6 +113,7 @@ class SkillOrchestrator:
         self.provider_health = {}
         self.usage_log = []
         self.native_agents = {}
+        self.project_skills = {}  # Sprint 14: project_id -> {skill_type -> GeneratedSkill}
 
         # Initialize providers
         self._init_providers()
@@ -163,17 +164,52 @@ class SkillOrchestrator:
         if self.native_agents:
             self.provider_health[SkillProvider.NATIVE_PYTHON] = True
 
-    async def execute_skill(self, request: SkillRequest) -> SkillResponse:
+    async def execute_skill(
+        self,
+        request: SkillRequest,
+        project_id: Optional[str] = None
+    ) -> SkillResponse:
         """Execute a skill request with intelligent routing.
+
+        Sprint 14: Now supports project-specific skills. If project_id is provided,
+        routes to project-specific skill first, then falls back to global skills.
 
         Args:
             request: Skill request to execute
+            project_id: Optional project ID for project-specific skills
 
         Returns:
             Skill response with execution results
         """
         start_time = time.time()
 
+        # Sprint 14: Try project-specific skill first if project_id provided
+        if project_id and project_id in self.project_skills:
+            # Extract skill type from skill_name (e.g., "scene-analyzer" from "scene-analyzer-the-explants")
+            skill_type = self._extract_skill_type(request.skill_name)
+
+            if skill_type in self.project_skills[project_id]:
+                try:
+                    result = await self._execute_project_skill(
+                        project_id,
+                        skill_type,
+                        request
+                    )
+
+                    execution_time = (time.time() - start_time) * 1000
+                    self._log_execution(request, SkillProvider.CUSTOM, execution_time, success=True)
+
+                    result.metadata.update({
+                        "execution_time_ms": execution_time,
+                        "project_id": project_id,
+                        "skill_type": skill_type
+                    })
+
+                    return result
+                except Exception as e:
+                    logger.warning(f"Project-specific skill failed: {e}. Falling back to global skills.")
+
+        # Fall back to global skills (existing logic)
         # Get provider priority list
         provider_priority = self._get_provider_priority(request)
 
@@ -594,3 +630,201 @@ class SkillOrchestrator:
             health["overall_status"] = "degraded"
 
         return health
+
+    # ===== Sprint 14: Project-Specific Skill Support =====
+
+    def register_project_skills(
+        self,
+        project_id: str,
+        skills: Dict[str, Any]
+    ):
+        """
+        Register project-specific skills.
+
+        Sprint 14: Adds support for project-specific skills generated during setup.
+
+        Args:
+            project_id: Project identifier (e.g., "the-explants")
+            skills: Dictionary of skill_type -> GeneratedSkill
+        """
+
+        if project_id not in self.project_skills:
+            self.project_skills[project_id] = {}
+
+        for skill_type, skill in skills.items():
+            self.project_skills[project_id][skill_type] = skill
+
+        logger.info(f"Registered {len(skills)} skills for project: {project_id}")
+
+    async def _execute_project_skill(
+        self,
+        project_id: str,
+        skill_type: str,
+        request: SkillRequest
+    ) -> SkillResponse:
+        """
+        Execute project-specific skill.
+
+        Sprint 14: Calls project-specific Claude Code skill stored in project directory.
+
+        Args:
+            project_id: Project identifier
+            skill_type: Skill type (e.g., "scene-analyzer")
+            request: Skill request
+
+        Returns:
+            Skill response
+
+        Raises:
+            Exception if skill execution fails
+        """
+        import subprocess
+        import json
+
+        skill = self.project_skills[project_id][skill_type]
+
+        # Use Claude Code to execute the skill
+        # Skills are Claude Code skills stored in project .claude/skills/
+        logger.info(f"Executing project skill: {skill.skill_name}")
+
+        try:
+            result = subprocess.run(
+                ["claude", "skill", skill.skill_name, json.dumps(request.input_data)],
+                capture_output=True,
+                text=True,
+                timeout=60  # 60 second timeout
+            )
+
+            if result.returncode != 0:
+                raise Exception(f"Skill execution failed: {result.stderr}")
+
+            output = json.loads(result.stdout)
+
+            return SkillResponse(
+                status=SkillStatus.SUCCESS,
+                provider=SkillProvider.CUSTOM,
+                data=output,
+                metadata={
+                    "project_id": project_id,
+                    "skill_type": skill_type,
+                    "skill_name": skill.skill_name
+                }
+            )
+
+        except subprocess.TimeoutExpired:
+            raise Exception(f"Skill execution timed out after 60 seconds")
+        except json.JSONDecodeError as e:
+            raise Exception(f"Failed to parse skill output: {e}")
+        except Exception as e:
+            raise Exception(f"Skill execution error: {e}")
+
+    def _extract_skill_type(self, skill_name: str) -> str:
+        """
+        Extract skill type from full skill name.
+
+        Examples:
+            "scene-analyzer-the-explants" -> "scene-analyzer"
+            "scene-enhancer-witty-hearts" -> "scene-enhancer"
+            "scene-analyzer" -> "scene-analyzer"
+
+        Args:
+            skill_name: Full skill name
+
+        Returns:
+            Skill type
+        """
+        # Known skill types
+        known_types = [
+            "scene-analyzer",
+            "scene-enhancer",
+            "character-validator",
+            "scene-writer",
+            "scene-multiplier",
+            "scaffold-generator"
+        ]
+
+        # Try to match known types
+        for skill_type in known_types:
+            if skill_name.startswith(skill_type):
+                return skill_type
+
+        # If no match, return the whole name
+        return skill_name
+
+    def list_project_skills(self, project_id: str) -> List[Dict[str, Any]]:
+        """
+        List all skills for a project.
+
+        Sprint 14: Returns project-specific skills.
+
+        Args:
+            project_id: Project identifier
+
+        Returns:
+            List of skill metadata dictionaries
+        """
+
+        if project_id not in self.project_skills:
+            return []
+
+        skills = []
+        for skill_type, skill in self.project_skills[project_id].items():
+            skills.append({
+                "skill_name": skill.skill_name,
+                "skill_type": skill_type,
+                "voice_profile": skill.voice_profile.voice_name,
+                "genre": skill.voice_profile.genre,
+                "project_id": project_id
+            })
+
+        return skills
+
+    def get_project_skill_info(
+        self,
+        project_id: str,
+        skill_type: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get detailed information about a project skill.
+
+        Sprint 14: Returns detailed skill metadata.
+
+        Args:
+            project_id: Project identifier
+            skill_type: Skill type (e.g., "scene-analyzer")
+
+        Returns:
+            Skill metadata or None if not found
+        """
+
+        if project_id not in self.project_skills:
+            return None
+
+        if skill_type not in self.project_skills[project_id]:
+            return None
+
+        skill = self.project_skills[project_id][skill_type]
+
+        return {
+            "skill_name": skill.skill_name,
+            "skill_type": skill_type,
+            "voice_profile": {
+                "name": skill.voice_profile.voice_name,
+                "genre": skill.voice_profile.genre,
+                "characteristics": skill.voice_profile.primary_characteristics
+            },
+            "project_id": project_id,
+            "references": list(skill.references.keys()),
+            "available": True
+        }
+
+    def list_all_projects(self) -> List[str]:
+        """
+        List all projects with registered skills.
+
+        Sprint 14: Returns project IDs.
+
+        Returns:
+            List of project IDs
+        """
+        return list(self.project_skills.keys())
