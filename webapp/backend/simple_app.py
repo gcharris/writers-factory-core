@@ -719,6 +719,235 @@ async def analyze_character(character_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Sprint 10: File Operations Endpoints
+@app.get("/api/manuscript/files")
+async def list_scene_files():
+    """List all scene files in the manuscript (Sprint 10).
+
+    Returns both the manuscript structure and actual .md files on disk.
+    """
+    try:
+        manuscript_path = project_path / ".manuscript" / "explants-v1"
+
+        if not manuscript_path.exists():
+            return {"files": [], "scenes_dir": None}
+
+        storage = ManuscriptStorage(manuscript_path)
+        manuscript = storage.load()
+
+        if not manuscript:
+            return {"files": [], "scenes_dir": None}
+
+        # Scan for .md files
+        scenes_dir = manuscript_path / "scenes"
+        file_list = []
+
+        if scenes_dir.exists():
+            for md_file in scenes_dir.rglob("*.md"):
+                rel_path = md_file.relative_to(manuscript_path)
+                file_list.append({
+                    "path": str(rel_path),
+                    "name": md_file.name,
+                    "size": md_file.stat().st_size,
+                    "modified": md_file.stat().st_mtime
+                })
+
+        return {
+            "files": file_list,
+            "scenes_dir": str(scenes_dir) if scenes_dir.exists() else None
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/scene/create")
+async def create_scene(request: dict):
+    """Create a new scene in the manuscript (Sprint 10).
+
+    Args:
+        request: {
+            "chapter_id": str,
+            "title": str,
+            "content": str (optional),
+            "position": int (optional)
+        }
+    """
+    try:
+        chapter_id = request.get("chapter_id")
+        title = request.get("title", "New Scene")
+        content = request.get("content", "")
+        position = request.get("position")  # None = append to end
+
+        if not chapter_id:
+            raise HTTPException(status_code=400, detail="chapter_id required")
+
+        manuscript = _manuscript_cache.get('current')
+        if not manuscript:
+            manuscript_path = project_path / ".manuscript" / "explants-v1"
+            storage = ManuscriptStorage(manuscript_path)
+            manuscript = storage.load()
+            _manuscript_cache['current'] = manuscript
+
+        if not manuscript:
+            raise HTTPException(status_code=404, detail="No manuscript loaded")
+
+        # Find the chapter
+        target_chapter = None
+        for act in manuscript.acts:
+            for chapter in act.chapters:
+                if chapter.id == chapter_id:
+                    target_chapter = chapter
+                    break
+            if target_chapter:
+                break
+
+        if not target_chapter:
+            raise HTTPException(status_code=404, detail="Chapter not found")
+
+        # Create new scene
+        from factory.core.manuscript.structure import Scene
+        import uuid
+
+        scene_id = f"scene-{uuid.uuid4().hex[:8]}"
+        new_scene = Scene(
+            id=scene_id,
+            title=title,
+            content=content
+        )
+
+        # Add to chapter
+        if position is not None and 0 <= position <= len(target_chapter.scenes):
+            target_chapter.scenes.insert(position, new_scene)
+        else:
+            target_chapter.scenes.append(new_scene)
+
+        # Save manuscript
+        manuscript_path = project_path / ".manuscript" / "explants-v1"
+        storage = ManuscriptStorage(manuscript_path)
+        success = storage.save(manuscript)
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save manuscript")
+
+        return {
+            "success": True,
+            "scene": {
+                "id": new_scene.id,
+                "title": new_scene.title,
+                "file_path": new_scene.file_path
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/scene/{scene_id}/rename")
+async def rename_scene(scene_id: str, request: dict):
+    """Rename a scene (Sprint 10).
+
+    Updates both the manifest and renames the .md file.
+    """
+    try:
+        new_title = request.get("title")
+        if not new_title:
+            raise HTTPException(status_code=400, detail="title required")
+
+        manuscript = _manuscript_cache.get('current')
+        if not manuscript:
+            manuscript_path = project_path / ".manuscript" / "explants-v1"
+            storage = ManuscriptStorage(manuscript_path)
+            manuscript = storage.load()
+            _manuscript_cache['current'] = manuscript
+
+        if not manuscript:
+            raise HTTPException(status_code=404, detail="No manuscript loaded")
+
+        # Find and update scene
+        scene = manuscript.get_scene(scene_id)
+        if not scene:
+            raise HTTPException(status_code=404, detail="Scene not found")
+
+        scene.title = new_title
+
+        # Save manuscript (will update the .md file)
+        manuscript_path = project_path / ".manuscript" / "explants-v1"
+        storage = ManuscriptStorage(manuscript_path)
+        success = storage.save(manuscript)
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save manuscript")
+
+        return {
+            "success": True,
+            "title": new_title,
+            "file_path": scene.file_path
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/scene/{scene_id}")
+async def delete_scene(scene_id: str):
+    """Delete a scene (Sprint 10).
+
+    Removes from manifest and deletes the .md file.
+    """
+    try:
+        manuscript = _manuscript_cache.get('current')
+        if not manuscript:
+            manuscript_path = project_path / ".manuscript" / "explants-v1"
+            storage = ManuscriptStorage(manuscript_path)
+            manuscript = storage.load()
+            _manuscript_cache['current'] = manuscript
+
+        if not manuscript:
+            raise HTTPException(status_code=404, detail="No manuscript loaded")
+
+        # Find and remove scene
+        scene_file_path = None
+        scene_found = False
+
+        for act in manuscript.acts:
+            for chapter in act.chapters:
+                for i, scene in enumerate(chapter.scenes):
+                    if scene.id == scene_id:
+                        scene_file_path = scene.file_path
+                        chapter.scenes.pop(i)
+                        scene_found = True
+                        break
+                if scene_found:
+                    break
+            if scene_found:
+                break
+
+        if not scene_found:
+            raise HTTPException(status_code=404, detail="Scene not found")
+
+        # Delete the .md file
+        if scene_file_path:
+            manuscript_path = project_path / ".manuscript" / "explants-v1"
+            file_to_delete = manuscript_path / scene_file_path
+            if file_to_delete.exists():
+                file_to_delete.unlink()
+
+        # Save updated manuscript
+        storage = ManuscriptStorage(manuscript_path)
+        success = storage.save(manuscript)
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save manuscript")
+
+        return {"success": True, "deleted": scene_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     print("=" * 70)
