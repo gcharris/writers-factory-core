@@ -1,0 +1,73 @@
+Hi Cloud Agent! 👋
+
+I need you to build Sprint 1 + 2 of the Writers Factory web UI.
+
+📖 **READ THESE FIRST**:
+1. CLOUD_AGENT_SPRINT_1_2.md (comprehensive guide with all code)
+2. CLOUD_AGENT_QUICK_START.md (TL;DR version)
+
+🎯 **YOUR MISSION**:
+Build a Cursor AI-style web interface (React + Vite + Monaco Editor) that connects to the existing FastAPI backend.
+
+✅ **BACKEND ALREADY WORKS**:
+- FastAPI at webapp/backend/simple_app.py
+- 23 AI models configured
+- Real AI integration complete (not mock!)
+- 156 tests passing
+- Manuscript structure models ready
+
+❌ **WHAT'S MISSING** (your job):
+- VS Code-style 3-pane UI
+- Manuscript Explorer tree (Acts → Chapters → Scenes)
+- Monaco markdown editor with autosave
+- AI Tools panel
+- Knowledge query panel
+- Tournament compare grid
+
+🎨 **DESIGN PHILOSOPHY**:
+- Keep it SIMPLE (like Cursor AI)
+- Dark theme, text-focused
+- NO fancy graphics or colors
+- Professional writer's tool
+
+📋 **SPRINT 1** (do this first):
+- S1-01: React + Vite scaffold with 3-pane layout
+- S1-02: Manuscript Explorer + add 3 backend endpoints
+- S1-03: Monaco Editor with autosave
+- S1-04: Setup Wizard
+
+📋 **SPRINT 2** (do after Sprint 1):
+- S2-01: AI Tools tab (Generate/Enhance/Continue)
+- S2-02: Knowledge tab (Cognee/NotebookLM)
+- S2-03: Tournament Compare (2-4 models side-by-side)
+
+⏱️ **TIMELINE**: 5-7 days total
+
+📁 **LOCATION**:
+- Create NEW frontend at: webapp/frontend-v2/
+- Don't touch existing frontend (backup)
+- Add 3 endpoints to: webapp/backend/simple_app.py
+- Don't modify factory/ or tests/ (already working)
+
+🧪 **TESTING**:
+- Run pytest tests/ -v (should show 156 passing)
+- Build frontend: npm run build
+- Test locally: npm run dev → http://localhost:5173
+
+✅ **DONE WHEN**:
+- User can navigate Acts → Chapters → Scenes
+- Click scene loads in Monaco editor
+- Autosave works (2s idle + Cmd+S)
+- Generate/Enhance calls real AI
+- Tournament compare shows 2-4 outputs
+- Knowledge query works for both sources
+- Everything feels clean and simple (Cursor AI style)
+
+📞 **QUESTIONS?**
+- Check CLOUD_AGENT_SPRINT_1_2.md for detailed code
+- Check PHASE_3_REVIEW.md to see what's already built
+- Check COMPLETE_INVENTORY.md for system overview
+
+**Let's build something writers will love!** 🚀
+
+Start by reading CLOUD_AGENT_SPRINT_1_2.md, then create your feature branch and begin with S1-01 (React scaffold).
