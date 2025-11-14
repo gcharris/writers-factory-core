@@ -124,6 +124,7 @@ const editor = useEditor({
     CharacterCount
   ],
   content: props.initialContent || '',
+  contentType: 'markdown',  // CRITICAL: Enable bidirectional Markdown support
   editable: !props.readOnly,
   autofocus: true,
   editorProps: {
@@ -491,6 +492,22 @@ If Cloud Agent implemented distraction-free mode in Sprint 7, keep it:
 - ✅ Active states show which formatting is applied
 - ✅ Prose content is readable (good typography)
 - ✅ Dark mode support (if implemented in Sprint 7)
+
+**Optional Enhancement (Future Sprint):**
+
+**Split View Mode** - Left rich editor, right Markdown preview:
+```
+┌─────────────────┬─────────────────┐
+│  TipTap Editor  │  MD Preview     │
+│  (WYSIWYM)      │  (remark/rehype)│
+│                 │                 │
+│  [Rich editing] │  # Heading      │
+│                 │  **bold**       │
+│                 │  - list         │
+└─────────────────┴─────────────────┘
+```
+
+This would use `remark` + `rehype` to render Markdown preview from `editor.storage.markdown.getMarkdown()`. **Not required for January course** - WYSIWYM editor is sufficient. Can add later based on student feedback.
 
 ---
 
