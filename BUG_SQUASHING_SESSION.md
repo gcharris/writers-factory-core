@@ -19,7 +19,7 @@
 
 ---
 
-## Bugs Found & Fixed (13 total)
+## Bugs Found & Fixed (14 total)
 
 ### ✅ Bug #1: Missing Phase A Code
 **Fix:** Merged Phase A commit (3e66414) - brought in 2,893 lines
@@ -77,6 +77,14 @@
 - `CostTracker` (correct)
 - `Session` (correct)
 All require `session_path: Path` parameter on initialization.
+
+### ✅ Bug #14: KnowledgeGraph Wrong Class Name
+**Component:** `factory.analysis.knowledge_graph`
+**Error:** `cannot import name 'KnowledgeGraph'`
+**Root Cause:** Class is actually named `NovelKnowledgeGraph`, not `KnowledgeGraph`
+**Impact:** Low - Documentation/naming inconsistency only
+**Fix:** Use correct name `NovelKnowledgeGraph` or add alias
+**Status:** Documented in COMPREHENSIVE_BUG_HUNT_RESULTS.md
 
 ---
 
