@@ -20,10 +20,11 @@ class Scene:
     Attributes:
         id: Unique identifier
         title: Scene title
-        content: Scene text content
+        content: Scene text content (optional - may be loaded from file)
         word_count: Number of words in content
         notes: Optional notes about the scene
         metadata: Additional metadata (tags, status, etc.)
+        file_path: Path to scene's .md file (relative to manuscript root)
     """
 
     id: str
@@ -32,6 +33,7 @@ class Scene:
     word_count: int = 0
     notes: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
+    file_path: Optional[str] = None  # Path to .md file for file-based storage
 
     def __post_init__(self):
         """Calculate word count if not provided."""
@@ -47,20 +49,30 @@ class Scene:
         self.content = content
         self.word_count = len(content.split())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, include_content: bool = True) -> Dict[str, Any]:
         """Convert to dictionary for serialization.
+
+        Args:
+            include_content: If False, excludes content (for manifest-only export)
 
         Returns:
             Dictionary representation
         """
-        return {
+        data = {
             "id": self.id,
             "title": self.title,
-            "content": self.content,
             "word_count": self.word_count,
             "notes": self.notes,
             "metadata": self.metadata,
         }
+
+        if self.file_path:
+            data["file_path"] = self.file_path
+
+        if include_content:
+            data["content"] = self.content
+
+        return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Scene":
@@ -79,6 +91,7 @@ class Scene:
             word_count=data.get("word_count", 0),
             notes=data.get("notes", ""),
             metadata=data.get("metadata", {}),
+            file_path=data.get("file_path"),
         )
 
 
@@ -157,8 +170,11 @@ class Chapter:
         """
         return sum(scene.word_count for scene in self.scenes)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, include_content: bool = True) -> Dict[str, Any]:
         """Convert to dictionary for serialization.
+
+        Args:
+            include_content: If False, excludes scene content (for manifest-only export)
 
         Returns:
             Dictionary representation
@@ -166,7 +182,7 @@ class Chapter:
         return {
             "id": self.id,
             "title": self.title,
-            "scenes": [scene.to_dict() for scene in self.scenes],
+            "scenes": [scene.to_dict(include_content=include_content) for scene in self.scenes],
             "notes": self.notes,
             "metadata": self.metadata,
         }
@@ -264,8 +280,11 @@ class Act:
         """
         return sum(chapter.total_word_count for chapter in self.chapters)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, include_content: bool = True) -> Dict[str, Any]:
         """Convert to dictionary for serialization.
+
+        Args:
+            include_content: If False, excludes scene content (for manifest-only export)
 
         Returns:
             Dictionary representation
@@ -273,7 +292,7 @@ class Act:
         return {
             "id": self.id,
             "title": self.title,
-            "chapters": [chapter.to_dict() for chapter in self.chapters],
+            "chapters": [chapter.to_dict(include_content=include_content) for chapter in self.chapters],
             "notes": self.notes,
             "metadata": self.metadata,
         }
@@ -299,6 +318,118 @@ class Act:
 
 
 @dataclass
+class Character:
+    """Represents a character in the manuscript.
+
+    Separates True Character (inner core) from Characterization (observable traits).
+    This distinction is critical for dimensional character development.
+
+    Attributes:
+        id: Unique identifier
+        name: Character name
+        role: Character role ('protagonist', 'antagonist', 'supporting')
+        core_traits: Internal traits (True Character)
+        values: Character values and beliefs
+        fears: Character fears and anxieties
+        appearance: Physical appearance
+        mannerisms: Observable behaviors and habits
+        speech_pattern: How the character speaks
+        observable_traits: External traits (Characterization)
+        fatal_flaw: Character's fatal flaw
+        mistaken_belief: Underlying mistaken belief driving the flaw
+        transformation_goal: What the character needs to learn/become
+        reveals_protagonist_dimension: For supporting cast - which side they reveal
+        serves_protagonist_goal: For supporting cast - how they help protagonist
+        arc_notes: Notes about character arc
+        scene_appearances: List of scene IDs where character appears
+    """
+
+    id: str
+    name: str
+    role: str  # 'protagonist', 'antagonist', 'supporting'
+
+    # True Character (inner core)
+    core_traits: List[str] = field(default_factory=list)
+    values: List[str] = field(default_factory=list)
+    fears: List[str] = field(default_factory=list)
+
+    # Characterization (observable)
+    appearance: str = ""
+    mannerisms: str = ""
+    speech_pattern: str = ""
+    observable_traits: List[str] = field(default_factory=list)
+
+    # Flaw & Arc
+    fatal_flaw: str = ""
+    mistaken_belief: str = ""
+    transformation_goal: str = ""
+
+    # Relationships (for supporting cast)
+    reveals_protagonist_dimension: str = ""  # Which side they reveal
+    serves_protagonist_goal: str = ""  # How they help protagonist
+
+    # Metadata
+    arc_notes: str = ""
+    scene_appearances: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization.
+
+        Returns:
+            Dictionary representation
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "role": self.role,
+            "core_traits": self.core_traits,
+            "values": self.values,
+            "fears": self.fears,
+            "appearance": self.appearance,
+            "mannerisms": self.mannerisms,
+            "speech_pattern": self.speech_pattern,
+            "observable_traits": self.observable_traits,
+            "fatal_flaw": self.fatal_flaw,
+            "mistaken_belief": self.mistaken_belief,
+            "transformation_goal": self.transformation_goal,
+            "reveals_protagonist_dimension": self.reveals_protagonist_dimension,
+            "serves_protagonist_goal": self.serves_protagonist_goal,
+            "arc_notes": self.arc_notes,
+            "scene_appearances": self.scene_appearances,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Character":
+        """Create Character from dictionary.
+
+        Args:
+            data: Dictionary with character data
+
+        Returns:
+            Character instance
+        """
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            role=data["role"],
+            core_traits=data.get("core_traits", []),
+            values=data.get("values", []),
+            fears=data.get("fears", []),
+            appearance=data.get("appearance", ""),
+            mannerisms=data.get("mannerisms", ""),
+            speech_pattern=data.get("speech_pattern", ""),
+            observable_traits=data.get("observable_traits", []),
+            fatal_flaw=data.get("fatal_flaw", ""),
+            mistaken_belief=data.get("mistaken_belief", ""),
+            transformation_goal=data.get("transformation_goal", ""),
+            reveals_protagonist_dimension=data.get("reveals_protagonist_dimension", ""),
+            serves_protagonist_goal=data.get("serves_protagonist_goal", ""),
+            arc_notes=data.get("arc_notes", ""),
+            scene_appearances=data.get("scene_appearances", []),
+        )
+
+
+@dataclass
 class Manuscript:
     """Complete manuscript with acts, chapters, and scenes.
 
@@ -313,6 +444,7 @@ class Manuscript:
     title: str
     author: str = ""
     acts: List[Act] = field(default_factory=list)
+    characters: List[Character] = field(default_factory=list)
     notes: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -442,8 +574,67 @@ class Manuscript:
             "words": self.total_word_count,
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def add_character(self, character: Character) -> None:
+        """Add a character to the manuscript.
+
+        Args:
+            character: Character instance to add
+        """
+        self.characters.append(character)
+
+    def get_character(self, character_id: str) -> Optional[Character]:
+        """Get character by ID.
+
+        Args:
+            character_id: Character identifier
+
+        Returns:
+            Character if found, None otherwise
+        """
+        for character in self.characters:
+            if character.id == character_id:
+                return character
+        return None
+
+    def get_protagonist(self) -> Optional[Character]:
+        """Get the protagonist character.
+
+        Returns:
+            Protagonist character if found, None otherwise
+        """
+        for character in self.characters:
+            if character.role == 'protagonist':
+                return character
+        return None
+
+    def get_supporting_cast(self) -> List[Character]:
+        """Get all supporting characters.
+
+        Returns:
+            List of supporting characters
+        """
+        return [c for c in self.characters if c.role == 'supporting']
+
+    def remove_character(self, character_id: str) -> bool:
+        """Remove character by ID.
+
+        Args:
+            character_id: Character identifier
+
+        Returns:
+            True if removed, False if not found
+        """
+        for i, character in enumerate(self.characters):
+            if character.id == character_id:
+                self.characters.pop(i)
+                return True
+        return False
+
+    def to_dict(self, include_content: bool = True) -> Dict[str, Any]:
         """Convert to dictionary for serialization.
+
+        Args:
+            include_content: If False, excludes scene content (for manifest-only export)
 
         Returns:
             Dictionary representation
@@ -451,7 +642,8 @@ class Manuscript:
         return {
             "title": self.title,
             "author": self.author,
-            "acts": [act.to_dict() for act in self.acts],
+            "acts": [act.to_dict(include_content=include_content) for act in self.acts],
+            "characters": [char.to_dict() for char in self.characters],
             "notes": self.notes,
             "metadata": self.metadata,
         }
@@ -473,4 +665,5 @@ class Manuscript:
             metadata=data.get("metadata", {}),
         )
         manuscript.acts = [Act.from_dict(a) for a in data.get("acts", [])]
+        manuscript.characters = [Character.from_dict(c) for c in data.get("characters", [])]
         return manuscript
