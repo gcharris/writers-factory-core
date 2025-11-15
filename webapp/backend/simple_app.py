@@ -39,6 +39,8 @@ from datetime import datetime
 
 # Sprint 14 Phase B: Import setup routes
 from webapp.backend.routes import setup as setup_router
+# Sprint 16: Import notebook management routes
+from webapp.backend.routes import notebooks as notebooks_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -58,6 +60,8 @@ app.add_middleware(
 
 # Sprint 14 Phase B: Include setup routes
 app.include_router(setup_router.router)
+# Sprint 16: Include notebook management routes
+app.include_router(notebooks_router.router)
 
 # Global state
 project_path = Path.cwd() / "project"
