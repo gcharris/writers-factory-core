@@ -12,6 +12,39 @@ Writers Factory Core is a clean, reusable framework that allows writers to:
 - **Build workflows** - Create custom generation pipelines for characters, worlds, and scenes
 - **Integrate knowledge** - Connect to multiple knowledge base systems for context-aware generation
 
+## Getting Started: Project Setup Wizard ✨
+
+**New to Writers Factory?** Start by creating your custom project with the Setup Wizard:
+
+1. **Launch Writers Factory**
+   ```bash
+   npm run dev
+   ```
+
+2. **Click "Create New Project"** in the UI (or visit http://localhost:5173/setup)
+
+3. **Follow the 6-step wizard:**
+   - Enter project details (name & genre)
+   - Paste 3-5 example scenes that represent YOUR voice
+   - Upload reference materials (optional: style guides, character sheets)
+   - AI analyzes your voice and extracts patterns
+   - Review & test your custom analyzer
+   - Create project!
+
+4. **You'll Get 6 AI Skills Custom-Built for YOUR Voice:**
+   - `scene-analyzer` - Scores scenes using YOUR quality criteria
+   - `scene-enhancer` - Makes surgical fixes matching YOUR style
+   - `character-validator` - Ensures character consistency
+   - `scene-writer` - Writes new scenes in YOUR voice
+   - `scene-multiplier` - Creates 5 variations per scene
+   - `scaffold-generator` - Expands outlines with story knowledge
+
+**Why This Matters:** Generic AI tools use one-size-fits-all prompts. Writers Factory generates skills tuned to YOUR writing patterns, metaphor domains, and quality standards.
+
+**📖 [Read the Complete Setup Wizard Guide](docs/setup-wizard-guide.md)**
+
+---
+
 ## Quick Start
 
 ### Installation

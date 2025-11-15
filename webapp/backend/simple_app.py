@@ -16,6 +16,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from factory.core.config.loader import load_agent_config, get_enabled_agents
 from webapp.backend.agent_integration import get_bridge
 
+# Sprint 14 Phase B: Import setup routes
+from webapp.backend.routes import setup as setup_router
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Writers Factory",
@@ -31,6 +34,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Sprint 14 Phase B: Include setup routes
+app.include_router(setup_router.router)
 
 # Global state
 project_path = Path.cwd() / "project"
