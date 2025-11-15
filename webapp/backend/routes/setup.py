@@ -1,11 +1,13 @@
 """
-Project Setup API Routes - Sprint 14 Phase B
+Project Setup API Routes - Sprint 14 Phase B + Sprint 15 Beginner Mode
 
 Endpoints for the Project Setup Wizard:
 - POST /api/setup/analyze-voice - Analyze voice from example passages
 - POST /api/setup/generate-skills - Generate 6 custom skills
 - POST /api/setup/test-skill - Test a generated skill
 - POST /api/setup/create-project - Create complete project structure
+- POST /api/setup/analyze-from-notebooklm - Extract voice from NotebookLM (Sprint 15)
+- POST /api/setup/upgrade-to-novel-skills - Upgrade from starter to novel skills (Sprint 15)
 """
 
 from fastapi import APIRouter, HTTPException
@@ -25,6 +27,11 @@ from factory.core.skill_generator import SkillGenerator, GeneratedSkill
 from factory.core.project_creator import ProjectCreator
 from factory.integrations.notebooklm_setup import NotebookLMSetupIntegration
 from factory.core.skill_orchestrator import SkillOrchestrator, SkillRequest
+# Sprint 15: Beginner Mode imports
+from factory.integrations.notebooklm_voice_extractor import NotebookLMVoiceExtractor
+from factory.core.starter_skill_generator import StarterSkillGenerator
+from factory.core.progress_upgrade_system import ProgressUpgradeSystem
+from factory.core.dual_voice_profiles import StarterVoiceProfile, NovelVoiceProfile
 
 logger = logging.getLogger(__name__)
 
@@ -426,3 +433,176 @@ def _dict_to_voice_profile(profile_dict: Dict[str, Any]) -> VoiceProfile:
         quality_criteria=quality_criteria,
         voice_consistency_notes=profile_dict.get("voice_consistency_notes", [])
     )
+
+
+# Sprint 15: Beginner Mode Endpoints
+
+
+class AnalyzeFromNotebookLMRequest(BaseModel):
+    """Request model for analyzing voice from NotebookLM."""
+    notebooklmUrl: str
+    genre: str = "literary"
+    minWords: int = 3000
+
+
+class AnalyzeFromNotebookLMResponse(BaseModel):
+    """Response model for NotebookLM voice analysis."""
+    starterVoice: Dict[str, Any]
+    wordCount: int
+    sourceBreakdown: Dict[str, int]
+
+
+class UpgradeToNovelSkillsRequest(BaseModel):
+    """Request model for upgrading to novel skills."""
+    projectId: str
+    projectName: str
+    genre: str
+    allScenesText: str  # Combined text of all scenes
+
+
+class UpgradeToNovelSkillsResponse(BaseModel):
+    """Response model for upgrade to novel skills."""
+    success: bool
+    novelVoice: Optional[Dict[str, Any]] = None
+    skills: Optional[Dict[str, Any]] = None
+    comparison: Optional[Dict[str, Any]] = None
+    message: str = ""
+    error: Optional[str] = None
+
+
+@router.post("/analyze-from-notebooklm", response_model=AnalyzeFromNotebookLMResponse)
+async def analyze_from_notebooklm(request: AnalyzeFromNotebookLMRequest):
+    """Extract voice from personal writing in NotebookLM.
+
+    This endpoint enables beginners to start with 0 words of fiction by
+    extracting voice from personal writing (emails, social media, diary)
+    uploaded to NotebookLM.
+
+    Args:
+        request: Contains notebooklmUrl, genre, and minWords
+
+    Returns:
+        StarterVoiceProfile with source breakdown
+    """
+    try:
+        logger.info(f"Analyzing voice from NotebookLM: {request.notebooklmUrl}")
+
+        # Initialize clients
+        client = get_anthropic_client()
+        nlm_extractor = NotebookLMVoiceExtractor(anthropic_client=client)
+
+        # Extract personal voice data from NotebookLM
+        personal_voice_data = await nlm_extractor.extract_personal_voice(
+            notebook_url=request.notebooklmUrl,
+            min_words=request.minWords
+        )
+
+        logger.info(
+            f"Extracted {personal_voice_data.total_words} words "
+            f"from {len(personal_voice_data.sources_by_type)} source types"
+        )
+
+        # Generate StarterVoiceProfile
+        starter_voice = await nlm_extractor.generate_starter_voice_profile(
+            personal_voice_data=personal_voice_data,
+            genre=request.genre
+        )
+
+        logger.info(f"Starter voice profile created: {starter_voice.voice_name}")
+
+        # Convert to dict for response
+        return AnalyzeFromNotebookLMResponse(
+            starterVoice=starter_voice.to_dict(),
+            wordCount=personal_voice_data.total_words,
+            sourceBreakdown=personal_voice_data.word_counts_by_type
+        )
+
+    except ValueError as e:
+        logger.error(f"Validation error in NotebookLM analysis: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"NotebookLM analysis failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Voice analysis from NotebookLM failed: {str(e)}"
+        )
+
+
+@router.post("/upgrade-to-novel-skills", response_model=UpgradeToNovelSkillsResponse)
+async def upgrade_to_novel_skills(request: UpgradeToNovelSkillsRequest):
+    """Upgrade from starter skills to novel skills.
+
+    Called when a beginner reaches 2,500 words of fiction. Analyzes their
+    fiction voice and generates novel-tuned skills.
+
+    Args:
+        request: Contains projectId, projectName, genre, and allScenesText
+
+    Returns:
+        NovelVoiceProfile, novel skills, and voice evolution comparison
+    """
+    try:
+        logger.info(f"Upgrading project {request.projectId} to novel skills")
+
+        # Get Anthropic client
+        client = get_anthropic_client()
+
+        # TODO: Retrieve previous StarterVoiceProfile from project storage
+        # For now, we'll note this needs to be implemented
+        # In production, you'd load from database/file system
+        logger.warning(
+            "TODO: Load previous StarterVoiceProfile from project storage. "
+            "Using placeholder for now."
+        )
+
+        # Create placeholder starter profile
+        # In production, this would be loaded from project metadata
+        from factory.core.dual_voice_profiles import StarterVoiceProfile
+        previous_starter = StarterVoiceProfile(
+            voice_name="Placeholder Starter",
+            genre=request.genre,
+            primary_characteristics=["Placeholder"],
+            sentence_structure={"typical_length": "12 words"},
+            vocabulary={"formality_level": "casual"},
+            pov_style={"depth": "medium"},
+            source_types=["email", "social_media"],
+            total_source_words=5000
+        )
+
+        # Perform upgrade
+        upgrade_system = ProgressUpgradeSystem(client)
+        result = await upgrade_system.perform_upgrade(
+            project_name=request.projectName,
+            project_id=request.projectId,
+            genre=request.genre,
+            all_scenes_text=request.allScenesText,
+            previous_starter=previous_starter
+        )
+
+        if not result.success:
+            raise HTTPException(
+                status_code=500,
+                detail=result.error or "Upgrade failed"
+            )
+
+        logger.info(f"Upgrade successful for project {request.projectId}")
+
+        return UpgradeToNovelSkillsResponse(
+            success=True,
+            novelVoice=result.novel_voice.to_dict() if result.novel_voice else None,
+            skills=result.novel_skills,
+            comparison=result.comparison,
+            message=result.message
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Upgrade to novel skills failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Upgrade failed: {str(e)}"
+        )
