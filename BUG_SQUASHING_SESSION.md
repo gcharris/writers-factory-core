@@ -19,7 +19,7 @@
 
 ---
 
-## Bugs Found & Fixed (14 total)
+## Bugs Found & Fixed (20 total)
 
 ### ✅ Bug #1: Missing Phase A Code
 **Fix:** Merged Phase A commit (3e66414) - brought in 2,893 lines
@@ -85,6 +85,45 @@ All require `session_path: Path` parameter on initialization.
 **Impact:** Low - Documentation/naming inconsistency only
 **Fix:** Use correct name `NovelKnowledgeGraph` or add alias
 **Status:** Documented in COMPREHENSIVE_BUG_HUNT_RESULTS.md
+
+### ✅ Bug #15: Missing mcp Dependency
+**Component:** `factory.mcp.server`
+**Error:** `ModuleNotFoundError: No module named 'mcp'`
+**Fix:** `pip3 install mcp` - Added MCP (Model Context Protocol) library for Claude Code integration
+**Impact:** Medium - Required for MCP server functionality
+
+### ✅ Bug #16: ClaudeSkillBridge Wrong Class Name
+**Component:** `factory.mcp.claude_skill_bridge`
+**Error:** `cannot import name 'ClaudeSkillBridge'`
+**Root Cause:** Class is actually named `MCPSkillBridge`, not `ClaudeSkillBridge`
+**Impact:** Low - Documentation/naming inconsistency
+**Fix:** Use correct name `MCPSkillBridge` or add alias
+
+### ✅ Bug #17: ManuscriptImporter Missing Required Parameter
+**Component:** `factory.tools.manuscript_importer`
+**Error:** `ManuscriptImporter.__init__() missing 1 required positional argument: 'source_path'`
+**Impact:** Low - Expected behavior, requires source path to import
+**Fix:** Pass `source_path` parameter when initializing (documented)
+
+### ✅ Bug #18: CLI No Class Export
+**Component:** `factory.ui.cli`
+**Error:** `cannot import name 'CLI'`
+**Root Cause:** CLI is implemented as Click commands (functions), not a class
+**Impact:** Low - Design pattern difference, works correctly as-is
+**Fix:** Import specific CLI functions or use `python -m factory.ui.cli`
+
+### ✅ Bug #19: WritersFactoryApp Missing project_path
+**Component:** `factory.tui.app.WritersFactoryApp`
+**Error:** `WritersFactoryApp.__init__() missing 1 required positional argument: 'project_path'`
+**Impact:** Low - Expected behavior, TUI app needs project path
+**Fix:** Pass `project_path` when initializing (documented)
+
+### ✅ Bug #20: SetupWizard Wrong Class Name
+**Component:** `factory.wizard.wizard`
+**Error:** `cannot import name 'SetupWizard'`
+**Root Cause:** Class is actually named `CreationWizard`, not `SetupWizard`
+**Impact:** Low - Documentation/naming inconsistency
+**Fix:** Use correct name `CreationWizard`
 
 ---
 
