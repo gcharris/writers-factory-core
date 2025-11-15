@@ -1,178 +1,159 @@
-# Prompt for Cloud Agent: Sprint 14 CRITICAL Implementation
+# Prompt for Cloud Agent: Sprint 14 Phase B - Frontend Setup Wizard
 
-## Sprint 12 Complete BUT Missing Critical Piece! 🚨
+## Amazing Work on Phase A! 🎉
 
-Sprint 12 Phase A works perfectly:
-- ✅ All 6 Explants Claude Skills accessible via MCP Bridge
-- ✅ Skill Orchestrator routing intelligently
-- ✅ Native Scene Analyzer working
-- ✅ API endpoints functional
-- ✅ Craft Panel UI ready
-- ✅ 3,000+ lines of code, all tests passing!
+Sprint 14 Phase A is ✅ **COMPLETE**:
+- ✅ Voice Profile Extractor (782 lines) - Analyzes passages, extracts voice
+- ✅ Skill Generator (736 lines) - Generates 6 custom skills per project
+- ✅ NotebookLM Integration (311 lines) - Extracts knowledge from notebooks
+- ✅ Project Creator (497 lines) - Creates complete project structure
+- ✅ Skill Registry Updates (236 lines) - Routes to project-specific skills
+- ✅ 6 Template Skills - Base templates for customization
 
-**HOWEVER:** Skills are hardcoded for The Explants project only. New writers cannot use the system.
-
----
-
-## CRITICAL: Sprint 14 - Project Setup Wizard (DO THIS FIRST!)
-
-**BLOCKING ISSUE:**
-User feedback: "This is not a nice to have add-on. This is a crucial component of setting up the project."
-
-Sprint 12 only works for G.C. Harris + The Explants. January students cannot use it.
-
-**THE FIX: Project Setup Wizard**
-
-Every writer needs custom skills for THEIR voice, not Explants voice.
+**Total: 2,893 lines of production backend code! 🚀**
 
 ---
 
-## Sprint 14 Before Sprint 13
+## Next: Sprint 14 Phase B - Frontend Setup Wizard
 
-Originally planned Sprint 13 (Novel Intelligence), but Sprint 14 is BLOCKING:
+**What's Left to Build:**
 
-**Sprint 14:** Project Setup Wizard - CRITICAL, DO NOW
-**Sprint 13:** Novel Intelligence - Do after Sprint 14
+The previous agent built the ENGINE. You need to build the DRIVER'S SEAT.
+
+Phase B creates the beautiful frontend wizard that lets writers use the Phase A engine.
 
 ---
 
-## Sprint 14: What to Build
+## READ THIS FIRST 👇
 
-**THE CRITICAL FOUNDATION**
+📄 **SPRINT_14_PHASE_B_START_HERE.md**
 
-Please read and implement:
-📄 **SPRINT_14_PROJECT_SETUP_WIZARD.md** (2,580 lines)
+This file contains:
+- ✅ Complete summary of what Phase A accomplished
+- 🎯 Detailed tasks for Phase B (what YOU need to build)
+- ✅ Success criteria
+- 🚀 Quick start commands
 
-This builds the Project Setup Wizard that lets EVERY writer create custom skills.
+**Start by reading SPRINT_14_PHASE_B_START_HERE.md**
 
-### Phase A: Backend - Skill Generation Engine (15-18h)
+---
 
-**Task 14-01: Voice Profile Extractor (4-5h)**
-- Analyze 3-5 example passages using LLM
-- Extract: sentence structure, vocabulary, POV style, metaphor domains
-- Identify anti-patterns from style guide
-- Derive quality criteria from genre + voice
+## Phase B Tasks (10-12h remaining)
 
-**Task 14-02: Skill Generator (6-7h)**
-- Generate 6 custom skills per project
-- Each skill gets custom SKILL.md with project-specific prompts
-- Create references/ directory: voice-profile.md, anti-patterns.md, quality-criteria.md
-- Skills: scene-analyzer-[project], scene-enhancer-[project], etc.
+**Task 14-06: Wizard UI Components** (5-6h) 🎯 **START HERE**
+- Create `webapp/frontend-v2/src/features/setup/SetupWizard.jsx`
+- 6-step wizard: Project Details → Voice Input → Reference Materials → AI Analysis → Review & Test → Finalize
+- Material-UI components (Stepper, TextField, Button, Card)
+- Loading states, form validation, error handling
+- Beautiful voice profile display
+- Test analyzer interface
 
-**Task 14-03: NotebookLM Integration (3-4h)**
-- Extract knowledge from user's NotebookLM notebooks
-- Query for: characters, world, plot, voice, themes
-- Use in voice analysis and skill generation
+**Task 14-07: Backend API Endpoints** (3-4h)
+- Create `webapp/backend/routes/setup.py`
+- 4 endpoints:
+  - POST /api/setup/analyze-voice (use VoiceProfileExtractor)
+  - POST /api/setup/generate-skills (use SkillGenerator)
+  - POST /api/setup/test-skill (use SkillOrchestrator)
+  - POST /api/setup/create-project (use ProjectCreator)
+- Integrate with Phase A classes
+- Error handling and validation
 
-**Task 14-04: Project Structure Creator (2-3h)**
-- Create projects/[project-name]/ directory structure
-- Save all 6 skills to .claude/skills/
-- Create knowledge/ base with project-specific content
-- Generate config.json and README.md
-
-**Task 14-05: Skill Registry Updates (2-3h)**
-- Update Skill Orchestrator to support project_id routing
-- Route skill calls to correct project-specific skill
-- Fallback to global skills if no project_id
-
-### Phase B: Frontend - Setup Wizard UI (10-12h)
-
-**Task 14-06: Wizard UI Components (5-6h)**
-- 6-step wizard with progress indicator
-- Step 1: Project details (name, genre, goals)
-- Step 2: Voice input (paste passages, NotebookLM links, upload docs)
-- Step 3: Reference materials (style guide, character sheets)
-- Step 4: AI Analysis (show extracted voice profile)
-- Step 5: Review & Test (show generated skills, test analyzer)
-- Step 6: Finalize (create project)
-
-**Task 14-07: Backend API Endpoints (3-4h)**
-- POST /api/setup/analyze-voice
-- POST /api/setup/generate-skills
-- POST /api/setup/test-skill
-- POST /api/setup/create-project
-
-**Task 14-08: Template Skills (2h)**
-- Create 6 base template SKILL.md files
-- LLM customizes templates for each project
-
-### Testing & Docs (3-5h)
-
-**Task 14-09: End-to-End Testing (2-3h)**
-- Create The Explants project via wizard (migration test)
-- Create Romance project via wizard (different voice)
-- Create Thriller project via wizard (minimal inputs)
+**Task 14-09: End-to-End Testing** (2-3h)
+- Create `tests/test_sprint_14_e2e.py`
+- Test complete setup flow
+- Create 3 test projects: Explants, Romance, Thriller
 - Verify all skills work correctly
 
-**Task 14-10: User Documentation (1-2h)**
-- Setup wizard guide
-- Project structure documentation
+**Task 14-10: Documentation** (1h)
+- Create `docs/setup-wizard-guide.md`
+- Update README with getting started section
 
 ---
 
-## Success Criteria
+## Success Criteria for Phase B
 
-Sprint 14 complete when:
+Phase B complete when:
 
-**Phase A:**
-- [ ] Voice Profile Extractor analyzes passages and extracts characteristics
-- [ ] Skill Generator creates 6 custom skills with project-specific SKILL.md
-- [ ] NotebookLM integration extracts knowledge
-- [ ] Project Creator builds correct directory structure
-- [ ] Skill Orchestrator routes to project-specific skills
+**Frontend:**
+- [ ] SetupWizard.jsx implements all 6 steps
+- [ ] Form validation works correctly
+- [ ] Loading states display during AI processing
+- [ ] Voice profile displays beautifully
+- [ ] Test analyzer works on sample scene
+- [ ] Success screen confirms project creation
 
-**Phase B:**
-- [ ] 6-step wizard UI complete and intuitive
-- [ ] API endpoints functional
-- [ ] Template skills created
+**Backend:**
+- [ ] All 4 API endpoints functional
+- [ ] Correctly integrate with Phase A classes (VoiceProfileExtractor, SkillGenerator, etc.)
+- [ ] Error handling and validation working
+- [ ] CORS configured for frontend
 
 **Testing:**
-- [ ] Created 3+ test projects (Explants, Romance, Thriller)
-- [ ] All projects have 6 working skills
-- [ ] Skills correctly differentiated by voice/genre
-- [ ] No conflicts between project skills
+- [ ] E2E tests pass for all 3 test projects
+- [ ] Created projects have 6 working skills
+- [ ] Skills differentiated by voice/genre
+- [ ] No conflicts between projects
 
-**Final Validation:**
-- [ ] January students can use wizard to set up their novels
-- [ ] Platform supports unlimited concurrent projects
-- [ ] Every writer gets skills tailored to THEIR voice
-
----
-
-## Why This Is CRITICAL
-
-**Without Sprint 14:**
-- ❌ System only works for The Explants
-- ❌ Students cannot use platform in January
-- ❌ No multi-project support
-- ❌ Platform cannot scale
-
-**With Sprint 14:**
-- ✅ EVERY writer can set up novel with custom skills
-- ✅ Students ready for January course
-- ✅ Unlimited concurrent projects
-- ✅ Foundation for platform scale
-- ✅ Skills match each writer's unique voice
-
-**This transforms Writers Factory from single-user tool to PLATFORM.**
+**Documentation:**
+- [ ] Setup wizard guide written
+- [ ] README updated
 
 ---
 
-## After Sprint 14: Then Sprint 13
+## Why Phase B Matters
 
-Once Sprint 14 complete, Sprint 13 (Novel Intelligence) can use project-specific skills:
-- Analyze ANY novel with that novel's custom skills
-- Generate strategic plans using project-specific criteria
-- Works for romance, thriller, literary fiction, etc.
+**Phase A built:**
+- Engine that generates custom skills
+- Backend infrastructure
+
+**Phase B builds:**
+- Driver's seat (UI)
+- API bridge to backend
+- Way for writers to ACCESS the engine
+
+**Without Phase B:**
+- Writers can't use the skill generation engine
+- No UI for project setup
+- Engine exists but is inaccessible
+
+**With Phase B:**
+- ✅ Beautiful wizard interface
+- ✅ Writers create projects in 5 minutes
+- ✅ Custom skills for every writer
+- ✅ Platform ready for January students
 
 ---
 
-## Start Here
+## Quick Start
 
-Begin with Task 14-01 (Voice Profile Extractor).
+```bash
+cd /Users/gch2024/writers-factory-core
 
-Everything you need is in SPRINT_14_PROJECT_SETUP_WIZARD.md
+# Read the Phase B guide FIRST
+cat SPRINT_14_PHASE_B_START_HERE.md
 
-**This is THE critical foundation. Build it NOW!** 🚀
+# Verify Phase A is here
+ls -la factory/core/voice_extractor.py
 
-Good luck! 🔥🔥🔥
+# Start with Task 14-06: Create SetupWizard.jsx
+# Then Task 14-07: Create API endpoints
+# Then Task 14-09: E2E tests
+# Then Task 14-10: Documentation
+
+# When done, commit and push
+git add .
+git commit -m "Sprint 14 Phase B Complete"
+git push
+```
+
+---
+
+## You've Got This! 🚀
+
+Phase A did the hard work (2,893 lines).
+
+Phase B is the beautiful wrapper that makes it accessible.
+
+**Start by reading SPRINT_14_PHASE_B_START_HERE.md** for detailed guidance.
+
+Good luck! 🔥
