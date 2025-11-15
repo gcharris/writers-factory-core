@@ -18,6 +18,7 @@ import { CraftPanel } from './features/craft/CraftPanel';
 import { WelcomeModal } from './features/onboarding/WelcomeModal';
 import { QuickStartBanner } from './features/onboarding/QuickStartBanner';
 import { HelpPanel } from './features/help/HelpPanel';
+import { NotebookLMGuide } from './pages/NotebookLMGuide';
 import { Book } from 'lucide-react';
 import { showFriendlyError } from './utils/errorHandler';
 
@@ -40,6 +41,7 @@ function App() {
     return !localStorage.getItem('writers-factory-onboarded');
   });
   const [showHelp, setShowHelp] = useState(false);
+  const [currentView, setCurrentView] = useState('main'); // 'main' | 'notebooklm-guide' | 'ai-wizard' | 'interactive-qa'
 
   useEffect(() => {
     // Check if setup needed
@@ -112,19 +114,48 @@ function App() {
 
     // Handle user choice
     switch (choice) {
+      case 'experienced':
+        // Experienced writer with existing manuscript
+        toast.info('Import feature coming soon!');
+        setShowWelcome(false);
+        break;
+
+      case 'prepared':
+        // Prepared writer with NotebookLM ready - show AI wizard
+        toast.success('Opening AI Wizard...');
+        setShowWelcome(false);
+        setCurrentView('ai-wizard');
+        break;
+
+      case 'notebooklm-guide':
+        // New writer - show NotebookLM guide
+        setShowWelcome(false);
+        setCurrentView('notebooklm-guide');
+        break;
+
+      case 'interactive-qa':
+        // New writer - continue with interactive Q&A
+        toast.success('Starting interactive setup...');
+        setShowWelcome(false);
+        setCurrentView('interactive-qa');
+        break;
+
       case 'wizard':
-        // Navigate to brainstorm page (creation wizard)
+        // Legacy: Navigate to brainstorm page (creation wizard)
         toast.success('Opening Creation Wizard...');
         setHasManuscript(false);
         break;
+
       case 'import':
-        // Trigger import flow
+        // Legacy: Trigger import flow
         toast.info('Import feature coming soon!');
         break;
+
       case 'example':
-        // Load example project
+        // Legacy: Load example project
         loadExampleProject();
         break;
+
       case 'skip':
         // Do nothing, let user explore
         toast.info('Welcome! Feel free to explore.');
@@ -149,6 +180,71 @@ function App() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p className="text-gray-400">Loading Writers Factory...</p>
+          </div>
+        </div>
+        <Toaster position="top-right" theme="dark" />
+      </QueryClientProvider>
+    );
+  }
+
+  // Show NotebookLM Guide if user chose that path
+  if (currentView === 'notebooklm-guide') {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <NotebookLMGuide
+          onBack={() => {
+            setCurrentView('main');
+            setShowWelcome(true);
+          }}
+          onReadyNow={() => {
+            setCurrentView('ai-wizard');
+            toast.success('Opening AI Wizard...');
+          }}
+          onContinueWithout={() => {
+            setCurrentView('interactive-qa');
+            toast.success('Starting interactive setup...');
+          }}
+        />
+        <Toaster position="top-right" theme="dark" />
+      </QueryClientProvider>
+    );
+  }
+
+  // Show AI Wizard if user chose prepared path
+  if (currentView === 'ai-wizard') {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="h-screen flex items-center justify-center bg-gray-900 text-gray-100">
+          <div className="text-center">
+            <p className="text-2xl mb-4">AI Wizard</p>
+            <p className="text-gray-400">Coming in Week 2 & 3!</p>
+            <button
+              onClick={() => setCurrentView('main')}
+              className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+        <Toaster position="top-right" theme="dark" />
+      </QueryClientProvider>
+    );
+  }
+
+  // Show Interactive Q&A if user chose new path without NotebookLM
+  if (currentView === 'interactive-qa') {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="h-screen flex items-center justify-center bg-gray-900 text-gray-100">
+          <div className="text-center">
+            <p className="text-2xl mb-4">Interactive Q&A</p>
+            <p className="text-gray-400">Fallback wizard coming soon!</p>
+            <button
+              onClick={() => setCurrentView('main')}
+              className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
+            >
+              Go Back
+            </button>
           </div>
         </div>
         <Toaster position="top-right" theme="dark" />

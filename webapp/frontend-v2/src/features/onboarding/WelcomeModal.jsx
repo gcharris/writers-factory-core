@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Zap, Users, Globe, Lightbulb, Sparkles } from 'lucide-react';
+import { PathSelectionStep } from './PathSelectionStep';
 
 export function WelcomeModal({ onClose, onComplete }) {
   const [step, setStep] = useState(0);
@@ -76,34 +77,14 @@ export function WelcomeModal({ onClose, onComplete }) {
       )
     },
     {
-      title: "Three Ways to Start",
+      title: "Choose Your Path",
       content: (
-        <div className="space-y-4">
-          <StartOption
-            title="🎯 Creation Wizard (Recommended)"
-            description="Guided 4-phase process to build your story from scratch. Perfect for beginners."
-            onClick={() => {
-              onComplete('wizard');
-              onClose();
-            }}
-          />
-          <StartOption
-            title="📂 Import Manuscript"
-            description="Already have a manuscript? Import your existing work to continue writing with AI assistance."
-            onClick={() => {
-              onComplete('import');
-              onClose();
-            }}
-          />
-          <StartOption
-            title="📖 Explore Example Project"
-            description="See how Writers Factory works with a pre-loaded demo novel (The Explants - Volume 1 excerpt)."
-            onClick={() => {
-              onComplete('example');
-              onClose();
-            }}
-          />
-        </div>
+        <PathSelectionStep
+          onComplete={(path) => {
+            onComplete(path);
+            onClose();
+          }}
+        />
       )
     }
   ];
