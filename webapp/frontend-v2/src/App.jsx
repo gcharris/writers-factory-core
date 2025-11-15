@@ -19,6 +19,7 @@ import { WelcomeModal } from './features/onboarding/WelcomeModal';
 import { QuickStartBanner } from './features/onboarding/QuickStartBanner';
 import { HelpPanel } from './features/help/HelpPanel';
 import { NotebookLMGuide } from './pages/NotebookLMGuide';
+import { AIWizard } from './pages/AIWizard';
 import { Book } from 'lucide-react';
 import { showFriendlyError } from './utils/errorHandler';
 
@@ -42,6 +43,7 @@ function App() {
   });
   const [showHelp, setShowHelp] = useState(false);
   const [currentView, setCurrentView] = useState('main'); // 'main' | 'notebooklm-guide' | 'ai-wizard' | 'interactive-qa'
+  const [notebookUrl, setNotebookUrl] = useState('');
 
   useEffect(() => {
     // Check if setup needed
@@ -214,18 +216,15 @@ function App() {
   if (currentView === 'ai-wizard') {
     return (
       <QueryClientProvider client={queryClient}>
-        <div className="h-screen flex items-center justify-center bg-gray-900 text-gray-100">
-          <div className="text-center">
-            <p className="text-2xl mb-4">AI Wizard</p>
-            <p className="text-gray-400">Coming in Week 2 & 3!</p>
-            <button
-              onClick={() => setCurrentView('main')}
-              className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
-            >
-              Go Back
-            </button>
-          </div>
-        </div>
+        <AIWizard
+          projectId="new-project"
+          notebookUrl={notebookUrl}
+          onComplete={(results) => {
+            toast.success('Project setup complete!');
+            setHasManuscript(true);
+            setCurrentView('main');
+          }}
+        />
         <Toaster position="top-right" theme="dark" />
       </QueryClientProvider>
     );
