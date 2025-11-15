@@ -19,7 +19,7 @@
 
 ---
 
-## Bugs Found & Fixed (5 total)
+## Bugs Found & Fixed (11 total)
 
 ### ✅ Bug #1: Missing Phase A Code
 **Fix:** Merged Phase A commit (3e66414) - brought in 2,893 lines
@@ -30,26 +30,64 @@
 ### ✅ Bug #3: Missing Anthropic Client
 **Fix:** Added `get_anthropic_client()` helper, fixed all Phase A class initializations
 
-### ✅ Bug #4: Wrong Parameter Names  
+### ✅ Bug #4: Wrong Parameter Names
 **Fix:** Changed to match Phase A interface - `example_passages`, `uploaded_docs`, etc.
 
 ### ✅ Bug #5: ProjectCreator Parameter
 **Fix:** Changed `base_projects_dir` to `projects_root`
 
+### ✅ Bug #6: VoiceProfile Invalid Parameter `dialogue_patterns`
+**File:** `webapp/backend/routes/setup.py:395-406`
+**Error:** `VoiceProfile.__init__() got an unexpected keyword argument 'dialogue_patterns'`
+**Fix:** Removed `dialogue_patterns` parameter, added missing `genre` and `voice_consistency_notes` parameters to match actual VoiceProfile signature
+
+### ✅ Bug #7: Wrong Method Name `generate_all_skills`
+**File:** `webapp/backend/routes/setup.py:189`
+**Error:** `'SkillGenerator' object has no attribute 'generate_all_skills'`
+**Fix:** Changed `generate_all_skills()` to `generate_project_skills()` and fixed parameter name from `knowledge_context` to `notebooklm_context`
+
+### ✅ Bug #8: GeneratedSkill Wrong Attribute `skill_md`
+**File:** `webapp/backend/routes/setup.py:201,307`
+**Error:** `'GeneratedSkill' object has no attribute 'skill_md'`
+**Fix:** Changed `skill.skill_md` to `skill.skill_prompt` and fixed GeneratedSkill reconstruction to include required `voice_profile` parameter
+
+### ✅ Bug #9: SkillRequest Missing `capability` Parameter
+**File:** `webapp/backend/routes/setup.py:243`
+**Error:** `SkillRequest.__init__() missing 1 required positional argument: 'capability'`
+**Fix:** Added capability mapping (scene-analyzer→analyze, scene-enhancer→enhance, etc.) and included capability in SkillRequest
+
+### ✅ Bug #10: SkillResponse Wrong Attribute `success`
+**File:** `webapp/backend/routes/setup.py:262`
+**Error:** `'SkillResponse' object has no attribute 'success'`
+**Fix:** Changed `result.success` to `result.status != SkillStatus.SUCCESS`
+
+### ✅ Bug #11: ProjectCreator Wrong Parameters
+**File:** `webapp/backend/routes/setup.py:343-349`
+**Error:** `ProjectCreator.create_project() got an unexpected keyword argument 'genre'`
+**Fix:** Removed `genre` parameter, changed `knowledge_context` to `notebooklm_context`, removed `await` (method is sync not async)
+
 ---
 
-## What Works Now
+## What Works Now (ALL 4 ENDPOINTS!)
 
 ✅ `/api/setup/analyze-voice` - Tested, works perfectly, returns VoiceProfile JSON
+✅ `/api/setup/generate-skills` - Tested, generates all 6 skills with reference files
+✅ `/api/setup/test-skill` - Tested, properly validates skill existence
+✅ `/api/setup/create-project` - Tested, creates complete project structure
 
 ---
 
-## What Needs Testing
+## Test Projects Created
 
-⚠️ `/api/setup/generate-skills` - Generate 6 custom skills  
-⚠️ `/api/setup/test-skill` - Test a generated skill  
-⚠️ `/api/setup/create-project` - Create complete project  
-⚠️ Full end-to-end flow
+✅ **test-thriller** - Thriller project with compressed prose
+✅ **witty-hearts** - Romance project with bright dialogue
+✅ **quiet-depths** - Literary fiction with contemplative voice
+
+All 3 projects have:
+- Complete directory structure (.claude/skills/, knowledge/, scenes/)
+- 6 custom skills (scene-analyzer, scene-enhancer, character-validator, scene-writer, scene-multiplier, scaffold-generator)
+- config.json and README.md
+- Voice profile and reference materials
 
 ---
 

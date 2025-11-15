@@ -1,0 +1,32 @@
+{
+  "project_name": "test-thriller",
+  "project_id": "test-thriller",
+  "created_at": "2025-11-15T11:45:14.388078",
+  "voice_profile": {
+    "name": "Unknown Voice",
+    "genre": "Literary Fiction",
+    "characteristics": [
+      "analytical",
+      "descriptive"
+    ]
+  },
+  "skills": {
+    "scene-analyzer": "scene-analyzer-test-thriller",
+    "scene-enhancer": "scene-enhancer-test-thriller",
+    "character-validator": "character-validator-test-thriller",
+    "scene-writer": "scene-writer-test-thriller",
+    "scene-multiplier": "scene-multiplier-test-thriller",
+    "scaffold-generator": "scaffold-generator-test-thriller"
+  },
+  "directory_structure": {
+    "skills": ".claude/skills/",
+    "knowledge": "knowledge/",
+    "scenes": "scenes/",
+    "references": "references/"
+  },
+  "metadata": {
+    "created_by": "Writers Factory Project Setup Wizard",
+    "sprint_version": "14",
+    "skill_count": 6
+  }
+}

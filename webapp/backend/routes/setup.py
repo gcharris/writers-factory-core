@@ -186,10 +186,10 @@ async def generate_skills(request: GenerateSkillsRequest):
         generator = SkillGenerator(client)
 
         # Generate all 6 skills
-        skills = await generator.generate_all_skills(
+        skills = await generator.generate_project_skills(
             project_name=request.name,
             voice_profile=voice_profile,
-            knowledge_context=knowledge_context
+            notebooklm_context=knowledge_context
         )
 
         # Convert to dict for JSON response
@@ -198,7 +198,7 @@ async def generate_skills(request: GenerateSkillsRequest):
             skills_dict[skill_type] = {
                 "skillName": skill.skill_name,
                 "skillType": skill.skill_type,
-                "skillMd": skill.skill_md,
+                "skillMd": skill.skill_prompt,
                 "references": skill.references
             }
 
@@ -229,8 +229,20 @@ async def test_skill(request: TestSkillRequest):
         orchestrator = SkillOrchestrator()
 
         # Build skill request
+        # Map skill type to capability
+        capability_map = {
+            "scene-analyzer": "analyze",
+            "scene-enhancer": "enhance",
+            "scene-writer": "generate",
+            "character-validator": "validate",
+            "scene-multiplier": "generate",
+            "scaffold-generator": "generate"
+        }
+        capability = capability_map.get(request.skillType, "analyze")
+
         skill_request = SkillRequest(
             skill_name=f"{request.skillType}-{request.projectId}",
+            capability=capability,
             input_data={
                 "scene_content": request.testScene,
                 "mode": "detailed",
@@ -246,10 +258,12 @@ async def test_skill(request: TestSkillRequest):
         )
 
         # Parse results
-        if not result.success:
+        from factory.core.skill_orchestrator import SkillStatus
+        if result.status != SkillStatus.SUCCESS:
+            error_msg = result.error.get('message', 'Unknown error') if result.error else 'Unknown error'
             raise HTTPException(
                 status_code=500,
-                detail=f"Skill execution failed: {result.error}"
+                detail=f"Skill execution failed: {error_msg}"
             )
 
         # Extract scores from result data
@@ -294,13 +308,19 @@ async def create_project(request: CreateProjectRequest):
         voice_profile = _dict_to_voice_profile(request.voiceProfile)
 
         # Reconstruct GeneratedSkills
+        # Note: We can't fully reconstruct GeneratedSkill without voice_profile
+        # So we'll create a simple dict structure for ProjectCreator
         generated_skills = {}
         for skill_type, skill_data in request.generatedSkills.items():
+            # ProjectCreator expects GeneratedSkill objects
+            # We need to reconstruct with the voice_profile
+            voice_profile = _dict_to_voice_profile(request.voiceProfile)
             generated_skills[skill_type] = GeneratedSkill(
                 skill_name=skill_data["skillName"],
                 skill_type=skill_data["skillType"],
-                skill_md=skill_data["skillMd"],
-                references=skill_data["references"]
+                skill_prompt=skill_data["skillMd"],
+                references=skill_data["references"],
+                voice_profile=voice_profile
             )
 
         # Extract knowledge context from NotebookLM
@@ -320,12 +340,11 @@ async def create_project(request: CreateProjectRequest):
         creator = ProjectCreator(projects_root=Path("./projects"))
 
         # Create project
-        project_path = await creator.create_project(
+        project_path = creator.create_project(
             project_name=request.name,
             voice_profile=voice_profile,
             generated_skills=generated_skills,
-            genre=request.genre,
-            knowledge_context=knowledge_context,
+            notebooklm_context=knowledge_context,
             uploaded_docs=request.uploadedDocs
         )
 
@@ -358,48 +377,52 @@ def _dict_to_voice_profile(profile_dict: Dict[str, Any]) -> VoiceProfile:
     """Convert dictionary back to VoiceProfile object."""
     from factory.core.voice_extractor import MetaphorDomain, AntiPattern, QualityCriteria
 
-    # Reconstruct metaphor domains
-    metaphor_domains = []
-    for md in profile_dict.get("metaphorDomains", []):
-        metaphor_domains.append(
-            MetaphorDomain(
-                name=md["name"],
-                percentage=md["percentage"],
+    # Reconstruct metaphor domains - dict of name -> MetaphorDomain
+    metaphor_domains = {}
+    metaphor_dict = profile_dict.get("metaphor_domains", {})
+    if isinstance(metaphor_dict, dict):
+        for name, md in metaphor_dict.items():
+            metaphor_domains[name] = MetaphorDomain(
+                max_percentage=md.get("max_percentage", 20),
                 keywords=md.get("keywords", []),
                 examples=md.get("examples", [])
             )
-        )
 
     # Reconstruct anti-patterns
     anti_patterns = []
-    for ap in profile_dict.get("antiPatterns", []):
+    for ap in profile_dict.get("anti_patterns", []):
         anti_patterns.append(
             AntiPattern(
-                pattern=ap["pattern"],
-                reason=ap["reason"],
-                examples=ap.get("examples", [])
+                pattern_id=ap.get("pattern_id", ""),
+                name=ap.get("name", ""),
+                description=ap.get("description", ""),
+                why_avoid=ap.get("why_avoid", ""),
+                detection_method=ap.get("detection_method", ""),
+                severity=ap.get("severity", "medium"),
+                examples=ap.get("examples", []),
+                regex=ap.get("regex"),
+                keywords=ap.get("keywords", [])
             )
         )
 
     # Reconstruct quality criteria
-    quality_criteria = []
-    for qc in profile_dict.get("qualityCriteria", []):
-        quality_criteria.append(
-            QualityCriteria(
-                category=qc["category"],
-                criteria=qc["criteria"],
-                weight=qc.get("weight", 10)
-            )
+    quality_criteria = None
+    qc_dict = profile_dict.get("quality_criteria")
+    if qc_dict:
+        quality_criteria = QualityCriteria(
+            total_points=qc_dict.get("total_points", 100),
+            categories=qc_dict.get("categories", [])
         )
 
     return VoiceProfile(
-        voice_name=profile_dict.get("voiceName", "Unknown Voice"),
-        primary_characteristics=profile_dict.get("primaryCharacteristics", []),
-        sentence_structure=profile_dict.get("sentenceStructure", {}),
-        pov_style=profile_dict.get("povStyle", {}),
+        voice_name=profile_dict.get("voice_name", "Unknown Voice"),
+        genre=profile_dict.get("genre", "literary"),
+        primary_characteristics=profile_dict.get("primary_characteristics", []),
+        sentence_structure=profile_dict.get("sentence_structure", {}),
+        pov_style=profile_dict.get("pov_style", {}),
         vocabulary=profile_dict.get("vocabulary", {}),
-        dialogue_patterns=profile_dict.get("dialoguePatterns", {}),
         metaphor_domains=metaphor_domains,
         anti_patterns=anti_patterns,
-        quality_criteria=quality_criteria
+        quality_criteria=quality_criteria,
+        voice_consistency_notes=profile_dict.get("voice_consistency_notes", [])
     )

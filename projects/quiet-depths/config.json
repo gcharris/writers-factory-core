@@ -1,0 +1,32 @@
+{
+  "project_name": "quiet-depths",
+  "project_id": "quiet-depths",
+  "created_at": "2025-11-15T11:46:35.470170",
+  "voice_profile": {
+    "name": "Unknown Voice",
+    "genre": "Literary Fiction",
+    "characteristics": [
+      "analytical",
+      "descriptive"
+    ]
+  },
+  "skills": {
+    "scene-analyzer": "scene-analyzer-quiet-depths",
+    "scene-enhancer": "scene-enhancer-quiet-depths",
+    "character-validator": "character-validator-quiet-depths",
+    "scene-writer": "scene-writer-quiet-depths",
+    "scene-multiplier": "scene-multiplier-quiet-depths",
+    "scaffold-generator": "scaffold-generator-quiet-depths"
+  },
+  "directory_structure": {
+    "skills": ".claude/skills/",
+    "knowledge": "knowledge/",
+    "scenes": "scenes/",
+    "references": "references/"
+  },
+  "metadata": {
+    "created_by": "Writers Factory Project Setup Wizard",
+    "sprint_version": "14",
+    "skill_count": 6
+  }
+}
