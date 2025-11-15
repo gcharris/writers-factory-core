@@ -13,7 +13,9 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import logging
 import sys
+import os
 from pathlib import Path
+from anthropic import Anthropic
 
 # Add factory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
@@ -27,6 +29,18 @@ from factory.core.skill_orchestrator import SkillOrchestrator, SkillRequest
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/setup", tags=["setup"])
+
+
+# Helper to get Anthropic client
+def get_anthropic_client() -> Anthropic:
+    """Get Anthropic API client with key from environment."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="ANTHROPIC_API_KEY environment variable not set"
+        )
+    return Anthropic(api_key=api_key)
 
 
 # Request/Response Models
@@ -103,20 +117,15 @@ async def analyze_voice(request: AnalyzeVoiceRequest):
     try:
         logger.info(f"Analyzing voice from {len(request.examplePassages)} passages")
 
-        # Initialize extractor
-        extractor = VoiceProfileExtractor()
-
-        # Combine uploaded docs with passages for richer context
-        all_passages = request.examplePassages.copy()
-        for doc in request.uploadedDocs:
-            if doc.get('content'):
-                all_passages.append(doc['content'])
+        # Initialize extractor with Anthropic client
+        client = get_anthropic_client()
+        extractor = VoiceProfileExtractor(client)
 
         # Extract voice profile
         voice_profile = await extractor.extract_voice_profile(
-            passages=all_passages,
-            genre=request.genre,
-            style_guide=request.styleGuide if request.styleGuide else None
+            example_passages=request.examplePassages,
+            uploaded_docs=request.uploadedDocs,
+            notebooklm_context=None  # TODO: Add NotebookLM support
         )
 
         if not voice_profile:
@@ -125,47 +134,8 @@ async def analyze_voice(request: AnalyzeVoiceRequest):
                 detail="Voice analysis failed to extract profile"
             )
 
-        # Convert to dict for JSON response
-        profile_dict = {
-            "voiceName": voice_profile.voice_name,
-            "primaryCharacteristics": voice_profile.primary_characteristics,
-            "sentenceStructure": {
-                "avgLength": voice_profile.sentence_structure.get("avg_length"),
-                "compression": voice_profile.sentence_structure.get("compression"),
-                "variety": voice_profile.sentence_structure.get("variety"),
-                "patterns": voice_profile.sentence_structure.get("patterns", [])
-            },
-            "povStyle": {
-                "depth": voice_profile.pov_style.get("depth"),
-                "consciousnessMode": voice_profile.pov_style.get("consciousness_mode_percentage"),
-                "filterWords": voice_profile.pov_style.get("filter_words", [])
-            },
-            "metaphorDomains": [
-                {
-                    "name": domain.name,
-                    "percentage": domain.percentage,
-                    "keywords": domain.keywords,
-                    "examples": domain.examples
-                }
-                for domain in (voice_profile.metaphor_domains or [])
-            ],
-            "antiPatterns": [
-                {
-                    "pattern": ap.pattern,
-                    "reason": ap.reason,
-                    "examples": ap.examples
-                }
-                for ap in (voice_profile.anti_patterns or [])
-            ],
-            "qualityCriteria": [
-                {
-                    "category": qc.category,
-                    "criteria": qc.criteria,
-                    "weight": qc.weight
-                }
-                for qc in (voice_profile.quality_criteria or [])
-            ]
-        }
+        # Convert to dict for JSON response using built-in method
+        profile_dict = voice_profile.to_dict()
 
         logger.info(f"Voice profile extracted: {voice_profile.voice_name}")
 
@@ -211,8 +181,9 @@ async def generate_skills(request: GenerateSkillsRequest):
                 logger.warning(f"NotebookLM extraction failed: {e}")
                 knowledge_context = ""
 
-        # Initialize skill generator
-        generator = SkillGenerator()
+        # Initialize skill generator with Anthropic client
+        client = get_anthropic_client()
+        generator = SkillGenerator(client)
 
         # Generate all 6 skills
         skills = await generator.generate_all_skills(
@@ -346,7 +317,7 @@ async def create_project(request: CreateProjectRequest):
                 knowledge_context = ""
 
         # Initialize project creator
-        creator = ProjectCreator(base_projects_dir=Path("./projects"))
+        creator = ProjectCreator(projects_root=Path("./projects"))
 
         # Create project
         project_path = await creator.create_project(
